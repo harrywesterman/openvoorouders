@@ -2,7 +2,7 @@
 
 Een Nederlandstalige, zelf te hosten onderzoeksomgeving binnen webtrees. Je gebruikt één webtrees-login, één actieve stamboom en één onderzoeker. AI zoekt in archieven, leest eerdere dossiers en zet onderbouwde wijzigingen klaar voor jouw beoordeling.
 
-**Status: eerste implementatie / releasekandidaat. Nog geen stabiele installatie voor eindgebruikers.** Het manifest weigert installatie totdat de images met digest, het hostpakket en de acceptatie van de volledige combinatie beschikbaar zijn. Op de ontwikkelmachine is geen Docker Engine aanwezig; een geslaagde Ubuntu/Docker-proef wordt hier niet geclaimd. Zie [de acceptatiestatus](docs/acceptatie.md).
+**Status: eerste implementatie / releasekandidaat. Nog geen stabiele installatie voor eindgebruikers.** Het manifest weigert installatie totdat de images met digest, het hostpakket en de acceptatie van de volledige combinatie beschikbaar zijn. De containerproef is geslaagd op een Ubuntu 26.04.1-VM en in GitHub Actions: login, familiestart, MCP-processen, update en volledig herstel. Dit is nog geen vrijgave voor eindgebruikers. Zie [de acceptatiestatus](docs/acceptatie.md).
 
 ## Wat er staat
 

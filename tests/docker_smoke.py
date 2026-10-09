@@ -126,10 +126,13 @@ def main():
         stage=root/'host-fixture';shutil.copytree(root/'host',stage)
         sql('CREATE TABLE ovo_ci_marker(value VARCHAR(100))');sql("INSERT INTO ovo_ci_marker VALUES('before')")
         with patch('openvoorouders.lifecycle.prepare_host',return_value=stage):life.update(target)
+        sql('ALTER TABLE ovo_ci_marker ADD COLUMN after_upgrade INT')
         sql("UPDATE ovo_ci_marker SET value='after'")
         (root/'data/research/public/dossiers/CI.md').write_text('after')
         life.restore()
         if sql('SELECT value FROM ovo_ci_marker')[0]['value']!='before':raise RuntimeError('Database-snapshot niet volledig hersteld.')
+        if [c['Field'] for c in sql('SHOW COLUMNS FROM ovo_ci_marker')]!=['value']:
+            raise RuntimeError('Het vorige databaseschema is niet hersteld.')
         if (root/'data/research/public/dossiers/CI.md').read_text()!='Bronnen, onzekerheid en vervolgstappen: CI.':raise RuntimeError('Dossier niet hersteld.')
         if scan.read_text()!='scan fixture' or (root/'secrets/agent').read_text()!=values['agent']:raise RuntimeError('Media/geheimen niet hersteld.')
         report['real_snapshot_upgrade_fixture_full_restore']=True

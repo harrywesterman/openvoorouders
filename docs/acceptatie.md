@@ -1,6 +1,6 @@
 # Acceptatie en resterend werk
 
-Dit is een implementatie van de eerste releasekandidaat. Er is nog geen stabiele release of geslaagde Ubuntu/Docker-integratieproef. De installer weigert de onvolledige kandidaat terecht; er worden geen image-digests verzonnen.
+Dit is een implementatie van de eerste releasekandidaat. Er is nog geen stabiele release. De Ubuntu/Docker-integratieproef is geslaagd. De installer weigert de onvolledige kandidaat terecht; er worden geen image-digests verzonnen.
 
 ## Lokaal gecontroleerd
 
@@ -14,15 +14,27 @@ Dit is een implementatie van de eerste releasekandidaat. Er is nog geen stabiele
 
 ## Ubuntu-test-VM
 
-Op 9 oktober 2026 zijn alle 51 Python-tests ook geslaagd op Ubuntu 26.04.1 LTS (AMD64). Docker Engine 29.9.0 en Compose 5.6.0 zijn via de officiële Docker-APT-repository geïnstalleerd. De tests gebruiken `TMPDIR=/var/tmp` zodat de vrije-ruimtecontrole de gewone schijf meet, niet de kleine RAM-schijf op `/tmp`. Dit bewijst nog geen geslaagde containerinstallatie; daarvoor draait afzonderlijk `tests/docker_smoke.py` met echte MariaDB, webtrees en MCP-processen.
+Op 9 oktober 2026 zijn alle 53 Python-tests geslaagd. Op Ubuntu 26.04.1 LTS (AMD64) zijn Docker Engine 29.9.0 en Compose 5.6.0 via de officiële Docker-APT-repository geïnstalleerd. `tests/docker_smoke.py` is geslaagd op deze VM en in [GitHub Actions, broncommit 93a3a8a](https://github.com/harrywesterman/openvoorouders/actions/runs/37937167722). Dezelfde CI-run bouwde de images voor AMD64 en ARM64; de functionele containerproef draaide alleen op AMD64.
+
+De proef gebruikte echte MariaDB, webtrees en OpenCode/MCP-processen en controleerde:
+
+- Containerstart, databaseverbinding en daadwerkelijke webtrees-login.
+- Onderhoud: browseraanvragen geblokkeerd, interne logincontrole beschikbaar.
+- Nieuwe lege stamboom, familiestart, beoordeling, pending wijzigingen en GEDCOM-koppelingen.
+- MCP-handshakes met webtrees, archiefakte en newspapers, plus een echte webtrees-read via de bridge.
+- Update en volledige snapshotrestore met dossiers, scans, pending gegevens en geheimen.
+
+De upgradefixture gebruikt synthetische versies 0.0.0 → 0.1.0 met dezelfde images. Alleen het ophalen van het hostpakket wordt naar een lokaal, gecontroleerd pakket omgeleid. Dit bewijst de transactieroute; er bestaat nog geen vorige stabiele release om een werkelijke versieovergang mee te testen. Een aanvullende VM-proef wijzigde de databasestructuur na de snapshot: herstel verwijderde de toegevoegde kolom, herstelde de oorspronkelijke rij en behield het oorspronkelijke agentgeheim. Deze schemawijziging is ook opgenomen in de containerfixture.
+
+De proefomgeving bevat uitsluitend synthetische onderzoeksgegevens. Er zijn geen betaalde AI-aanroepen uitgevoerd. `TMPDIR=/var/tmp` voorkomt dat de vrije-ruimtecontrole de RAM-schijf op `/tmp` meet.
 
 ## Nog vereist vóór stabiele vrijgave
 
-- Images daadwerkelijk bouwen op AMD64 en ARM64. Controleer Python-, PHP-, Composer-, uv- en native bibliotheekversies in de buildattestatie. Bouwafhankelijkheden worden niet allemaal hermetisch uit een eigen pakketarchief gehaald; de uiteindelijke runtime-images zijn wel met digest vastgezet.
-- De webtrees-MCP-bridge, archiefakte en newspapers als echte processen starten; toolnamen, schema's, scopes, authenticatie, media-upload en read-before-write/hashverificatie testen. Externe Open Archieven-toolcontracten vastleggen en tegen drift controleren. Alleen OpenCode-health is hiervoor onvoldoende.
-- Schone Ubuntu-installatie doorlopen: automatisch webtrees-account, eerste stamboom, familiestart, GEDCOM-import en providerkeuze.
+- Functionele ARM64-containerproef uitvoeren. Controleer Python-, PHP-, Composer-, uv- en native bibliotheekversies in de buildattestatie. Bouwafhankelijkheden worden niet allemaal hermetisch uit een eigen pakketarchief gehaald; de uiteindelijke runtime-images zijn wel met digest vastgezet.
+- De al gestarte MCP-processen uitgebreider toetsen: toolnamen, schema's, scopes, authenticatie, media-upload en read-before-write/hashverificatie. Externe Open Archieven-toolcontracten vastleggen en tegen drift controleren. Alleen OpenCode-health is hiervoor onvoldoende.
+- De volledige interactieve installer met gepubliceerde release-assets doorlopen: automatisch webtrees-account, eerste stamboom, familiestart, GEDCOM-import en providerkeuze.
 - Alle plugins samen met JustLight en de onderzoeksinterface visueel en functioneel testen, inclusief CMM-aanvullingen en de bescherming van beheerde modules.
-- Upgrade en volledig herstel op echte MariaDB met bestaande gegevens, pending wijzigingen en gewijzigde schema's. Controleer ook bestandsownership en een stroomuitval tijdens iedere relevante fase.
+- Een echte upgrade vanaf de vorige stabiele release testen zodra die bestaat. Breid de geslaagde snapshotrestore uit met echte stroomuitval en foutinjecties tijdens iedere relevante fase; controleer bestandsownership.
 - Privacy van alle MCP-reads/writes, exportredactie, toolprompt-injectie, bronuitval, stopgedrag, modellen zonder tools/beeld en alle aangeboden authenticatiemethoden testen. Native OAuth met een localhostcallback werkt niet vanzelf vanuit een browser op een andere computer; hiervoor bestaat de hostaanmeldroute, maar iedere providerflow moet nog worden beproefd.
 - Controleer de integriteitscontrole voor lokale Compose-/hostcodewijzigingen en aanvullende modules ook op de echte Ubuntu-installatie.
 - De persoonlijke export is een portabele GEDCOM-/media-/dossier-/gespreksdownload, geen volledig herstelarchief. Herstellen gebruikt afgeschermde lokale snapshots via de host. Een grafische herstelwizard met upload van een secretvrij herstelbestand is nog niet aanwezig.
