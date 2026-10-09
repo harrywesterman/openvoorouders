@@ -15,6 +15,7 @@ jobs:
       - run: bash -n install.sh bin/openvoorouders
       - run: python3 tools/check-php.py
       - run: php -d zend.assertions=1 -d assert.exception=1 tests/family-start.php
+      - run: php -d zend.assertions=1 -d assert.exception=1 tests/progress.php
       - run: python3 tools/prepare-build.py releases/candidate.json
       - run: npm ci --omit=dev
         working-directory: dist/build

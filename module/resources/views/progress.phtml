@@ -1,0 +1,18 @@
+<?php
+$labels = ['starting'=>'Starten','running'=>'Bezig','stopping'=>'Wordt gestopt','stopped'=>'Gestopt','complete'=>'Afgerond','failed'=>'Mislukt','interrupted'=>'Onderbroken'];
+$tools = ['pending'=>'Wacht','running'=>'Bezig','completed'=>'Afgerond','error'=>'Mislukt'];
+$job = $details['job'];
+$active = in_array($job['state'], ['starting','running','stopping'], true);
+$visible = false;
+?>
+<section data-ovo-progress data-job="<?= e($job['id']) ?>" data-state="<?= e($job['state']) ?>" data-label="<?= e($labels[$job['state']] ?? 'Onbekend') ?>">
+<p><strong><?= e($labels[$job['state']] ?? 'Onbekend') ?></strong></p>
+<?php foreach ($details['messages'] as $message): $assistant = ($message['info']['role'] ?? '') !== 'user'; ?>
+<article><p><strong><?= $assistant ? 'Onderzoeksagent' : 'Jij' ?></strong></p>
+<?php if (isset($message['info']['error'])): $visible = true; ?><p role="alert">De provider of een bronactie is mislukt. Controleer de instellingen; er is geen andere provider gekozen.</p><?php endif ?>
+<?php foreach ($message['parts'] ?? [] as $part): if (($part['type'] ?? '') === 'text'): if ($assistant && trim($part['text'] ?? '') !== '') $visible = true; ?><pre><?= e($part['text'] ?? '') ?></pre>
+<?php elseif (($part['type'] ?? '') === 'tool'): $visible = true; ?><p>Bronactie: <?= e($part['tool'] ?? 'Onbekend') ?> · <?= e($tools[$part['state']['status'] ?? ''] ?? 'Onbekend') ?></p>
+<?php endif; endforeach ?></article>
+<?php endforeach ?>
+<?php if ($active && !$visible): ?><p>Het model bereidt een antwoord of bronactie voor. Er is nog geen zichtbare uitvoer; nieuwe tekst verschijnt hier automatisch.</p><?php endif ?>
+</section>

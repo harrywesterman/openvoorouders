@@ -116,6 +116,17 @@ final class Openvoorouders extends AbstractModule implements ModuleCustomInterfa
         $this->owner($request);
         $query = $request->getQueryParams();
         $tab = (string) ($query['tab'] ?? 'onderzoek');
+        if (($query['progress'] ?? '') === '1') {
+            $id = (string) ($query['job'] ?? '');
+            if (!preg_match('/^[a-f0-9]{32}$/', $id)) return response('Ongeldig onderzoek.', 400);
+            try {
+                $details = $this->agent('GET', '/jobs/' . $id);
+                return response(view('openvoorouders::progress', ['details'=>$details]), 200)
+                    ->withHeader('Cache-Control', 'no-store');
+            } catch (\Throwable $e) {
+                return response('De voortgang is tijdelijk niet beschikbaar.', 503)->withHeader('Cache-Control', 'no-store');
+            }
+        }
         $model = $jobs = $details = $settings = $consents = [];
         $error = '';
         try {

@@ -111,14 +111,57 @@ $form = static function (string $action) use ($module, $tab): void { ?>
 <label><input type="checkbox" name="private" value="1"> Privégegevens gebruiken (vereist toestemming voor deze provider)</label>
 <button>Onderzoek starten</button></form>
 <?php foreach ($jobs as $job): ?>
-<article><h3><a href="<?= e($module->url(['job'=>$job['id']])) ?>"><?= e($job['prompt']) ?></a></h3><p><?= e($states[$job['state']] ?? $job['state']) ?> · <?= e($job['provider']) ?> / <?= e($job['model']) ?></p>
-<?php if (in_array($job['state'], ['starting','running','stopping'], true)): $form('stop'); ?><input type="hidden" name="job" value="<?= e($job['id']) ?>"><button>Onderzoek stoppen</button></form><?php endif ?></article>
+<article data-ovo-job="<?= e($job['id']) ?>"><h3><a href="<?= e($module->url(['job'=>$job['id']])) ?>"><?= e($job['prompt']) ?></a></h3><p><span class="ovo-job-state"><?= e($states[$job['state']] ?? $job['state']) ?></span> · <?= e($job['provider']) ?> / <?= e($job['model']) ?></p>
+<?php if (in_array($job['state'], ['starting','running','stopping'], true)): ?><div class="ovo-stop"><?php $form('stop'); ?><input type="hidden" name="job" value="<?= e($job['id']) ?>"><button>Onderzoek stoppen</button></form></div><?php endif ?></article>
 <?php endforeach ?>
 <?php if ($details): ?>
-<h3>Gesprek en voortgang</h3><p><a href="<?= e($module->url(['job'=>$details['job']['id']])) ?>">Voortgang vernieuwen</a></p>
-<?php foreach ($details['messages'] as $message): ?><article><p><strong><?= ($message['info']['role'] ?? '') === 'user' ? 'Jij' : 'Onderzoeksagent' ?></strong></p>
-<?php if (isset($message['info']['error'])): ?><p role="alert">De provider of een bronactie is mislukt. Controleer de instellingen; er is geen andere provider gekozen.</p><?php endif ?>
-<?php foreach ($message['parts'] ?? [] as $part): if (($part['type'] ?? '') === 'text'): ?><pre><?= e($part['text']) ?></pre><?php elseif (($part['type'] ?? '') === 'tool'): ?><p>Bronactie: <?= e($part['tool']) ?> · <?= e($part['state']['status'] ?? '') ?></p><?php endif; endforeach ?></article><?php endforeach ?>
+<h3>Gesprek en voortgang</h3>
+<p><a href="<?= e($module->url(['job'=>$details['job']['id']])) ?>">Voortgang vernieuwen</a> · Antwoorden en bronacties worden automatisch bijgewerkt.</p>
+<p id="ovo-live-status" role="status">Live voortgang verbonden.</p>
+<div id="ovo-live-progress"><?= view('openvoorouders::progress', ['details'=>$details]) ?></div>
+<?php View::push('javascript') ?>
+<script>
+(() => {
+    const root = document.getElementById('ovo-live-progress');
+    const notice = document.getElementById('ovo-live-status');
+    const url = <?= json_encode($module->url(['job'=>$details['job']['id'], 'progress'=>'1']), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?>;
+    const active = () => ['starting', 'running', 'stopping'].includes(root.firstElementChild?.dataset.state);
+    const refresh = async () => {
+        if (!active()) { notice.textContent = 'De laatste voortgang is geladen. Dit onderzoek is niet meer actief.'; return; }
+        if (document.hidden) { setTimeout(refresh, 5000); return; }
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        let delay = 3000;
+        try {
+            const response = await fetch(url, {credentials:'same-origin', cache:'no-store', signal:controller.signal});
+            if (!response.ok || response.redirected) throw new Error('Voortgang niet bereikbaar');
+            const html = await response.text();
+            const fragment = new DOMParser().parseFromString(html, 'text/html').body.firstElementChild;
+            if (!fragment?.matches('[data-ovo-progress]') || fragment.dataset.job !== root.firstElementChild.dataset.job) throw new Error('Ongeldige voortgang');
+            const selection = window.getSelection();
+            if (!selection?.isCollapsed && (root.contains(selection.anchorNode) || root.contains(selection.focusNode))) {
+                notice.textContent = 'Live volgen blijft actief. Geselecteerde tekst wordt niet vervangen.';
+            } else {
+                if (fragment.outerHTML !== root.firstElementChild.outerHTML) root.replaceChildren(fragment);
+                const card = Array.from(document.querySelectorAll('[data-ovo-job]')).find(card => card.dataset.ovoJob === fragment.dataset.job);
+                if (card) {
+                    card.querySelector('.ovo-job-state').textContent = fragment.dataset.label;
+                    const stop = card.querySelector('.ovo-stop');
+                    if (stop) stop.hidden = !active();
+                }
+                notice.textContent = active() ? 'Live bijgewerkt om ' + new Date().toLocaleTimeString('nl-NL')
+                    : 'De laatste voortgang is geladen. Dit onderzoek is niet meer actief.';
+            }
+        } catch (error) {
+            notice.textContent = 'De verbinding is onderbroken. We proberen het automatisch opnieuw; je onderzoek blijft behouden.';
+            delay = 10000;
+        } finally { clearTimeout(timeout); }
+        if (active()) setTimeout(refresh, delay);
+    };
+    refresh();
+})();
+</script>
+<?php View::endpush() ?>
 <?php endif ?>
 <?php elseif ($tab === 'dossiers'): ?>
 <h2>Wat we weten, en wat nog openstaat</h2>
