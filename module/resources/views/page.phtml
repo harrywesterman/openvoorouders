@@ -1,0 +1,125 @@
+<?php
+use Fisharebest\Webtrees\Http\RequestHandlers\TreeManagement;
+use Fisharebest\Webtrees\Http\RequestHandlers\PendingChanges;
+use Openvoorouders\FamilyStart;
+$states = ['starting'=>'Starten','running'=>'Bezig','stopping'=>'Wordt gestopt','stopped'=>'Gestopt','complete'=>'Afgerond','failed'=>'Mislukt','interrupted'=>'Onderbroken'];
+$form = static function (string $action) use ($module, $tab): void { ?>
+<form method="post" action="<?= e($module->url()) ?>" class="mb-4"><?= csrf_field() ?>
+<input type="hidden" name="do" value="<?= e($action) ?>"><input type="hidden" name="tab" value="<?= e($tab) ?>">
+<?php };
+?>
+<style>
+.ovo {max-width:1040px;margin:2rem auto;color:inherit}.ovo h1{font-size:2.2rem}.ovo nav{display:flex;gap:1.5rem;flex-wrap:wrap;border-bottom:1px solid #ccc;padding:1rem 0;margin-bottom:2rem}.ovo label{display:block;margin:.7rem 0}.ovo input:not([type=checkbox]),.ovo select,.ovo textarea{display:block;width:100%;max-width:38rem;padding:.55rem;border:1px solid #888;border-radius:4px;background:var(--bs-body-bg,#fff);color:inherit}.ovo fieldset{border-top:1px solid #ccc;margin:1.6rem 0;padding-top:1rem}.ovo legend{font-size:1.15rem}.ovo button{padding:.65rem 1.2rem;border:0;border-radius:4px;background:#28594f;color:white}.ovo pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:36rem;overflow:auto}.ovo td,.ovo th{padding:.5rem;text-align:left}.ovo small{display:block}.ovo .notice{border-left:4px solid #28594f;padding:1rem;background:#28594f12}.ovo details{margin:1rem 0}
+</style>
+<main class="ovo">
+<p>OPENVOOROUDERS · <?= e($release['version']) ?></p>
+<h1>Van familieverhaal naar bron.</h1>
+<nav aria-label="Onderzoeksomgeving">
+<?php foreach (['onderzoek'=>'Onderzoek','familiestart'=>'Familiestart','dossiers'=>'Dossiers','instellingen'=>'AI instellen','beheer'=>'Versies en back-ups'] as $key=>$label): ?>
+<a href="<?= e($module->url(['tab'=>$key])) ?>" <?= $tab === $key ? 'aria-current="page"' : '' ?>><?= e($label) ?></a>
+<?php endforeach ?>
+</nav>
+<?php if ($error): ?><p role="alert"><?= e($error) ?></p><?php endif ?>
+<?php if ($message): ?><p role="status"><?= e($message) ?></p><?php endif ?>
+<?php if (!$tree): ?>
+<h2>Welke stamboom gaan we onderzoeken?</h2>
+<p>Maak of importeer eerst één stamboom via het webtrees-beheerpaneel. Kies hem daarna hieronder. Deze installatie is voor één onderzoeker.</p>
+<?php $form('configure') ?>
+<label>Actieve stamboom<select name="tree" required><?php foreach ($trees as $t): ?><option value="<?= e((string)$t->id()) ?>"><?= e($t->title()) ?></option><?php endforeach ?></select></label>
+<button>Deze stamboom gebruiken</button></form>
+<?php elseif ($tab === 'familiestart'): ?>
+<h2>Wat weet je al over je familie?</h2>
+<p>Begin bij jezelf of een ander familielid. Vul zoveel mogelijk namen, plaatsen en datums in. Onbekend mag leeg blijven. Schattingen: <code>ABT 1900</code>; een volledige datum: <code>12 JAN 1900</code>. Je kunt dit bewaren en later verdergaan. Dit werkt zonder AI.</p>
+<p>Heb je al een GEDCOM? Importeer die via het webtrees-beheerpaneel. De familiestart is alleen voor een lege boom.</p>
+<?php if ($draft['saved'] ?? false): ?><p class="notice">De familiestart is opgeslagen. Bekijk de personen en eventuele openstaande wijzigingen in webtrees.</p>
+<?php else: ?>
+<?php $form('draft') ?>
+<?php foreach (FamilyStart::ROLES as $role=>$label): ?>
+<details <?= $role === 'self' ? 'open' : '' ?>><summary><?= e($label) ?></summary><fieldset><legend><?= e($label) ?></legend>
+<?php foreach (['given'=>'Voornamen','surname'=>'Achternaam','birth'=>'Geboortedatum of jaar','place'=>'Geboorteplaats','death'=>'Overlijdensdatum of jaar','source'=>'Waar weet je dit van?','note'=>'Bijzonderheden of onzekerheden'] as $field=>$label): ?>
+<label><?= e($label) ?><input maxlength="1000" name="people[<?= e($role) ?>][<?= e($field) ?>]" value="<?= e($draft['people'][$role][$field] ?? '') ?>"></label>
+<?php endforeach ?></fieldset></details>
+<?php endforeach ?>
+<label><input type="checkbox" name="review" value="1"> Toon een controleoverzicht voordat ik opsla</label>
+<button>Concept bewaren</button></form>
+<?php if ($draft['review'] ?? false): ?>
+<h3>Controleer je familiegegevens</h3>
+<?php foreach ($draft['people'] as $role=>$person): ?><details open><summary><?= e(FamilyStart::ROLES[$role]) ?>: <?= e($person['given'] . ' ' . $person['surname']) ?></summary><pre><?= e(FamilyStart::gedcom($person)) ?></pre></details><?php endforeach ?>
+<?php $form('save-family') ?><input type="hidden" name="draft_hash" value="<?= e(hash('sha256', json_encode($draft, JSON_THROW_ON_ERROR))) ?>"><p>Deze gegevens worden als personen en familieverbanden opgeslagen. Webtrees toont wijzigingen die nog goedkeuring nodig hebben. Bij een ontbrekende tussengeneratie blijven verdere voorouders voorlopig ongekoppeld.</p><button>Gecontroleerd: opslaan in webtrees</button></form>
+<?php endif; endif ?>
+<?php elseif ($tab === 'onderzoek'): ?>
+<h2>Onderzoek <?= e($tree->title()) ?></h2>
+<p>Stel een vrije vraag of noem een persoon met het webtrees-ID. De agent leest eerdere dossiers, vermeldt bronnen en zet wijzigingen klaar voor jouw beoordeling in webtrees. Er loopt één onderzoek tegelijk.</p>
+<?php $form('research') ?>
+<label>Nieuw of vervolgonderzoek<select name="continue"><option value="">Nieuw onderzoek</option><?php foreach ($jobs as $job): if (!in_array($job['state'], ['starting','running','stopping'], true)): ?><option value="<?= e($job['id']) ?>"><?= e($job['prompt']) ?><?= $job['private'] ? ' · privé (vink hieronder privégegevens aan)' : '' ?></option><?php endif; endforeach ?></select></label>
+<label>Provider<select name="provider" required><?php foreach ($providers['all'] ?? [] as $p): ?><option value="<?= e($p['id']) ?>"><?= e($p['name']) ?><?= in_array($p['id'], $providers['connected'] ?? []) ? ' · verbonden' : '' ?></option><?php endforeach ?></select></label>
+<label>Model-ID<input name="model" required placeholder="Kopieer een model-ID uit het overzicht hieronder"></label>
+<details><summary>Beschikbare modellen en mogelijkheden</summary>
+<?php foreach ($providers['all'] ?? [] as $p): ?><details><summary><?= e($p['name']) ?></summary><ul><?php foreach ($p['models'] ?? [] as $id=>$m): ?><li><code><?= e($id) ?></code> · toolgebruik <?= ($m['capabilities']['toolcall'] ?? $m['tool_call'] ?? false) ? 'ja' : 'nee' ?> · beeld <?= ($m['capabilities']['input']['image'] ?? false) ? 'ja' : 'nee' ?></li><?php endforeach ?></ul></details><?php endforeach ?>
+</details>
+<label>Onderzoeksvraag<textarea name="prompt" rows="5" maxlength="20000" required></textarea></label>
+<label><input type="checkbox" name="private" value="1"> Privégegevens gebruiken (vereist toestemming voor deze provider)</label>
+<button>Onderzoek starten</button></form>
+<?php foreach ($jobs as $job): ?>
+<article><h3><a href="<?= e($module->url(['job'=>$job['id']])) ?>"><?= e($job['prompt']) ?></a></h3><p><?= e($states[$job['state']] ?? $job['state']) ?> · <?= e($job['provider']) ?> / <?= e($job['model']) ?></p>
+<?php if (in_array($job['state'], ['starting','running','stopping'], true)): $form('stop'); ?><input type="hidden" name="job" value="<?= e($job['id']) ?>"><button>Onderzoek stoppen</button></form><?php endif ?></article>
+<?php endforeach ?>
+<?php if ($details): ?>
+<h3>Gesprek en voortgang</h3><p><a href="<?= e($module->url(['job'=>$details['job']['id']])) ?>">Voortgang vernieuwen</a></p>
+<?php foreach ($details['messages'] as $message): ?><article><p><strong><?= ($message['info']['role'] ?? '') === 'user' ? 'Jij' : 'Onderzoeksagent' ?></strong></p>
+<?php if (isset($message['info']['error'])): ?><p role="alert">De provider of een bronactie is mislukt. Controleer de instellingen; er is geen andere provider gekozen.</p><?php endif ?>
+<?php foreach ($message['parts'] ?? [] as $part): if (($part['type'] ?? '') === 'text'): ?><pre><?= e($part['text']) ?></pre><?php elseif (($part['type'] ?? '') === 'tool'): ?><p>Bronactie: <?= e($part['tool']) ?> · <?= e($part['state']['status'] ?? '') ?></p><?php endif; endforeach ?></article><?php endforeach ?>
+<?php endif ?>
+<?php elseif ($tab === 'dossiers'): ?>
+<h2>Wat we weten, en wat nog openstaat</h2>
+<p>Dossiers bewaren bronnen, onzekerheden, zoekpogingen en vervolgstappen. De agent leest ze bij vervolgonderzoek opnieuw. Privédossiers blijven apart van openbaar onderzoek.</p>
+<?php foreach ($module->dossiers() as $name=>$content): ?><details><summary><?= e($name) ?></summary><pre><?= e($content) ?></pre></details><?php endforeach ?>
+<?php elseif ($tab === 'instellingen'): ?>
+<h2>Jouw AI, jouw keuze</h2>
+<p>Kies een provider uit de meegeleverde OpenCode-versie. Onderzoek vereist toolgebruik; beeldherkenning is nodig als je scans rechtstreeks wilt laten lezen. Er wordt nooit automatisch een andere provider gekozen.</p>
+<p>Eigen endpoints en lokale modelservers configureer je voorlopig in <code>data/agent-config/opencode.json</code> via de host. Die configuratie en aanmeldingen blijven bij updates behouden.</p>
+<p>Voor een aanmeldmethode die een lokale browsercallback vereist, gebruik je voorlopig de native aanmelding op de Linux-machine: <code>sudo openvoorouders ai-aanmelden</code>.</p>
+<details><summary>Eigen endpoint of lokale modelserver toevoegen (OpenAI-compatibel)</summary>
+<?php $form('custom-provider') ?>
+<label>Eigen provider-ID<input name="provider" value="eigen-lokaal" pattern="eigen-[a-z0-9-]{1,40}" required></label>
+<label>Naam<input name="name" placeholder="Mijn lokale modelserver" required></label>
+<label>API-basisadres<input name="url" type="url" placeholder="http://host.docker.internal:11434/v1" required></label>
+<label>Model-ID<input name="model" required></label>
+<label>API-sleutel (indien nodig)<input name="key" type="password" autocomplete="new-password"></label>
+<label>Contextlimiet in tokens<input name="context" type="number" value="32768" min="1024" max="2000000" required></label>
+<label>Maximale uitvoer in tokens<input name="output" type="number" value="4096" min="1024" max="2000000" required></label>
+<label><input type="checkbox" name="tools" value="1"> Volgens de modelserver ondersteunt dit model toolgebruik</label>
+<label><input type="checkbox" name="image" value="1"> Volgens de modelserver ondersteunt dit model afbeeldingen</label>
+<button>Eigen provider opslaan</button></form></details>
+<?php foreach ($providers['all'] ?? [] as $p): ?>
+<details><summary><?= e($p['name']) ?> (<?= e($p['id']) ?>)</summary>
+<?php foreach ($methods[$p['id']] ?? [['type'=>'api','label'=>'API-sleutel']] as $index=>$auth): ?>
+<?php $form(($auth['type'] ?? '') === 'oauth' ? 'oauth' : 'key') ?><input type="hidden" name="provider" value="<?= e($p['id']) ?>"><input type="hidden" name="method" value="<?= e((string)$index) ?>">
+<?php foreach ($auth['prompts'] ?? [] as $prompt): ?><label><?= e($prompt['message']) ?>
+<?php if (($prompt['type'] ?? '') === 'select'): ?><select name="inputs[<?= e($prompt['key']) ?>]">
+<?php foreach ($prompt['options'] as $option): ?><option value="<?= e($option['value']) ?>"><?= e($option['label']) ?></option><?php endforeach ?></select>
+<?php else: ?><input name="inputs[<?= e($prompt['key']) ?>]" placeholder="<?= e($prompt['placeholder'] ?? '') ?>"><?php endif ?></label><?php endforeach ?>
+<?php if (($auth['type'] ?? '') !== 'oauth'): ?><label>API-sleutel<input type="password" name="key" required autocomplete="new-password"></label><?php endif ?>
+<button><?= e($auth['label'] ?? 'Verbinden') ?></button></form><?php endforeach ?>
+<?php $form('consent') ?><input type="hidden" name="provider" value="<?= e($p['id']) ?>">
+<label><input type="checkbox" name="enabled" value="1" <?= ($consents[$p['id']] ?? false) ? 'checked' : '' ?>> Ik geef toestemming om privégegevens van mijn stamboom en privéonderzoeksdossiers naar <?= e($p['name']) ?> te sturen wanneer ik privéonderzoek start.</label>
+<button>Toestemming opslaan (leeg = intrekken)</button></form></details>
+<?php endforeach ?>
+<?php elseif ($tab === 'beheer'): ?>
+<h2>Je installatie bijhouden</h2>
+<p>Geïnstalleerd: Openvoorouders <?= e($release['version']) ?>. Updates worden als complete, geteste releases aangeboden. Start ze op de Linux-machine; de website heeft geen toegang tot Docker.</p>
+<pre>sudo openvoorouders status
+sudo openvoorouders backup
+sudo openvoorouders bijwerken
+sudo openvoorouders herstel</pre>
+<?php $catalogue=json_decode(@file_get_contents('/opt/ovo-control/releases.json') ?: '{}', true); ?>
+<p>Laatste releasecontrole: <?= e($catalogue['checked'] ?? 'nog niet uitgevoerd') ?></p>
+<?php if ($catalogue['error'] ?? false): ?><p><?= e($catalogue['error']) ?></p><?php endif ?>
+<?php foreach ($catalogue['releases'] ?? [] as $available): if (version_compare($available['manifest']['version'], $release['version'], '>')): ?>
+<details><summary>Openvoorouders <?= e($available['manifest']['version']) ?> beschikbaar</summary><pre><?= e($available['notes']) ?></pre></details>
+<?php endif; endforeach ?>
+<p>Dagelijkse lokale back-ups bevatten ook de geheimen die nodig zijn voor herstel en zijn alleen voor de beheerder toegankelijk. Houd daarnaast een kopie op een andere schijf.</p>
+<?php $form('export') ?><p>Download je stamboom, media, dossiers, gesprekken en openstaande voorstellen. Deze persoonlijke export bevat geen authenticatieopslag en vervangt de volledige lokale herstelback-up niet.</p><button>Persoonlijke export downloaden</button></form>
+<table><thead><tr><th>Onderdeel</th><th>Versie</th></tr></thead><tbody><?php foreach ($release['components'] as $name=>$component): ?><tr><td><?= e($name) ?></td><td><code><?= e($component['version']) ?></code></td></tr><?php endforeach ?></tbody></table>
+<?php endif ?>
+</main>

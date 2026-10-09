@@ -1,0 +1,56 @@
+{
+  "manifest_sha256": "",
+  "reviewer": "",
+  "release_notes_nl": "",
+  "known_limitations_nl": "",
+  "checks": {
+    "clean_install": {
+      "passed": false,
+      "evidence": ""
+    },
+    "previous_upgrade": {
+      "passed": false,
+      "evidence": ""
+    },
+    "plugins_justlight": {
+      "passed": false,
+      "evidence": ""
+    },
+    "login": {
+      "passed": false,
+      "evidence": ""
+    },
+    "mcp_contracts": {
+      "passed": false,
+      "evidence": ""
+    },
+    "privacy": {
+      "passed": false,
+      "evidence": ""
+    },
+    "stop_research": {
+      "passed": false,
+      "evidence": ""
+    },
+    "model_capabilities": {
+      "passed": false,
+      "evidence": ""
+    },
+    "failure_injection": {
+      "passed": false,
+      "evidence": ""
+    },
+    "full_restore": {
+      "passed": false,
+      "evidence": ""
+    },
+    "data_preservation": {
+      "passed": false,
+      "evidence": ""
+    },
+    "nontechnical_user": {
+      "passed": false,
+      "evidence": ""
+    }
+  }
+}

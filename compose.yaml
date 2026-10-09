@@ -1,0 +1,87 @@
+services:
+  database:
+    image: ${DATABASE_IMAGE:?Een vastgezet database-image is verplicht}
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: webtrees
+      MARIADB_USER: webtrees
+      MARIADB_PASSWORD_FILE: /run/secrets/database
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/database_root
+    secrets: [database, database_root]
+    volumes:
+      - ${OVO_ROOT}/data/database:/var/lib/mysql
+    networks: [database]
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+  webtrees:
+    image: ${WEBTREES_IMAGE:?Een vastgezet webtrees-image is verplicht}
+    restart: unless-stopped
+    ports:
+      - "${OVO_BIND:-127.0.0.1}:${OVO_PORT:-8080}:80"
+    environment:
+      BASE_URL: ${OVO_URL}
+      LANG: nl
+      PRETTY_URLS: "1"
+      WT_USER_FILE: /run/secrets/bootstrap_username
+      WT_NAME_FILE: /run/secrets/bootstrap_name
+      WT_EMAIL_FILE: /run/secrets/bootstrap_email
+      WT_PASS_FILE: /run/secrets/bootstrap_password
+      DB_HOST: database
+      DB_NAME: webtrees
+      DB_USER: webtrees
+      DB_PASS_FILE: /run/secrets/database
+      OVO_AGENT_URL: http://agent:4080
+      OVO_CONTROL: /opt/ovo-control
+      OVO_DATA: /opt/ovo-data
+    secrets: [database, agent, bootstrap_username, bootstrap_name, bootstrap_email, bootstrap_password]
+    volumes:
+      - ${OVO_ROOT}/data/webtrees:/var/www/webtrees/data
+      - ${OVO_ROOT}/data/modules:/var/www/webtrees/modules_v4
+      - ${OVO_ROOT}/data/research:/opt/ovo-data
+      - ${OVO_ROOT}/control:/opt/ovo-control:ro
+      - ${OVO_ROOT}/current.json:/opt/openvoorouders/release.json:ro
+    depends_on:
+      database: {condition: service_healthy}
+      agent: {condition: service_healthy}
+    networks: [database, application, egress]
+  agent:
+    image: ${AGENT_IMAGE:?Een vastgezet agent-image is verplicht}
+    restart: unless-stopped
+    init: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    environment:
+      HOME: /home/agent
+      OVO_CONTROL: /opt/ovo-control
+      OVO_DATA: /workspace
+      OVO_RELEASE: ${OVO_VERSION}
+      WEBTREES_MCP_URL: http://webtrees/mcp
+    secrets: [agent]
+    volumes:
+      - ${OVO_ROOT}/data/research:/workspace
+      - ${OVO_ROOT}/data/opencode:/home/agent/.local/share/opencode
+      - ${OVO_ROOT}/data/agent-config:/home/agent/.config/opencode
+      - ${OVO_ROOT}/control:/opt/ovo-control:ro
+    networks: [application, egress]
+    healthcheck:
+      test: [CMD, python3, /opt/agent/health.py]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+networks:
+  database: {internal: true}
+  application: {internal: true}
+  egress: {}
+secrets:
+  database: {file: "${OVO_ROOT}/secrets/database"}
+  database_root: {file: "${OVO_ROOT}/secrets/database_root"}
+  agent: {file: "${OVO_ROOT}/secrets/agent"}
+  bootstrap_username: {file: "${OVO_ROOT}/secrets/bootstrap_username"}
+  bootstrap_name: {file: "${OVO_ROOT}/secrets/bootstrap_name"}
+  bootstrap_email: {file: "${OVO_ROOT}/secrets/bootstrap_email"}
+  bootstrap_password: {file: "${OVO_ROOT}/secrets/bootstrap_password"}

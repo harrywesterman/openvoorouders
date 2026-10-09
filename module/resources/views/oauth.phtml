@@ -1,0 +1,6 @@
+<h1>Verbind je AI-provider</h1>
+<p><?= e($authorization['instructions'] ?? 'Volg de stappen van je provider.') ?></p>
+<?php if (preg_match('#^https?://#', $authorization['url'] ?? '')): ?><p><a href="<?= e($authorization['url']) ?>" target="_blank" rel="noopener noreferrer">Open de aanmeldpagina van je provider</a></p><?php endif ?>
+<form method="post" action="<?= e($module->url()) ?>"><?= csrf_field() ?>
+<input type="hidden" name="do" value="callback"><input type="hidden" name="tab" value="instellingen"><input type="hidden" name="provider" value="<?= e($provider) ?>"><input type="hidden" name="method" value="<?= e((string)$method) ?>">
+<label>Code (alleen als je provider hierom vraagt)<input name="code" autocomplete="off"></label><button>Aanmelding afronden</button></form>

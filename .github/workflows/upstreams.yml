@@ -1,0 +1,54 @@
+name: Upstreamversies voorstellen
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+concurrency:
+  group: upstream-proposal
+  cancel-in-progress: false
+jobs:
+  propose:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Vaste bronnen en image-digests oplossen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tools/lock-upstreams.py
+          mkdir -p dist/npm-lock
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.load(open('releases/candidate.json'))
+          Path('dist/npm-lock/package.json').write_text(json.dumps({'private':True,'dependencies':{'opencode-ai':m['components']['opencode']['version']}}))
+          PY
+          cd dist/npm-lock
+          npm install --package-lock-only --ignore-scripts
+          cp package-lock.json ../../releases/opencode-package-lock.json
+      - run: python3 -m unittest discover -s tests
+      - name: Wijzigingsvoorstel bijwerken
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if git diff --quiet -- releases; then exit 0; fi
+          git config user.name 'Openvoorouders onderhoud'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -B onderhoud/upstreamversies
+          git add releases
+          git commit -m 'Nieuwe upstreamversies ter beoordeling'
+          git push --force-with-lease origin onderhoud/upstreamversies
+          cat > /tmp/upstream-body.md <<'EOF'
+          Nieuwe vaste upstreambronnen en image-digests. Deze kandidaat is nog geen gebruikersupdate.
+
+          Beoordeel eerst beveiligingsreparaties, licenties, toolcontracten, PHP-compatibiliteit en migraties. Bouw de gewijzigde componenten en voer de volledige installatie-, upgrade- en herstelacceptatie uit voordat een stabiele release wordt vrijgegeven.
+          EOF
+          if ! gh pr view onderhoud/upstreamversies >/dev/null 2>&1; then
+            gh pr create --head onderhoud/upstreamversies --title 'Upstreamversies ter beoordeling' --body-file /tmp/upstream-body.md
+          fi
+          gh workflow run build.yml --ref onderhoud/upstreamversies

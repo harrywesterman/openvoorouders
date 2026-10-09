@@ -1,0 +1,16 @@
+[project]
+name = "openvoorouders"
+version = "0.1.0"
+description = "Nederlandstalig stamboomonderzoek met herstelbare containerupdates"
+requires-python = ">=3.10"
+license = {text = "GPL-3.0-or-later"}
+
+[project.scripts]
+openvoorouders = "openvoorouders.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["openvoorouders*"]

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+script="${BASH_SOURCE[0]}"
+if [ -L "$script" ]; then script="$(readlink -f "$script")"; fi
+ROOT="$(cd "$(dirname "$script")/.." && pwd)"
+export PYTHONPATH="$ROOT${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m openvoorouders.cli "$@"

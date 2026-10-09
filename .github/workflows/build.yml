@@ -1,0 +1,44 @@
+name: Release-images bouwen
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        type: choice
+        options: [all, agent, webtrees]
+        default: all
+      previous:
+        description: Manifestpad voor ongewijzigde images (alleen bij afzonderlijk bouwen)
+        default: ''
+permissions:
+  contents: read
+  packages: write
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - run: python3 -m unittest discover -s tests
+      - name: Aanmelden bij image-register
+        env:
+          TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+        run: printf '%s' "$TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+      - run: docker buildx create --use
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
+      - name: Geselecteerde componenten bouwen
+        env:
+          REPOSITORY: ${{ github.repository }}
+          COMPONENT: ${{ inputs.component }}
+          PREVIOUS: ${{ inputs.previous }}
+        run: |
+          registry="ghcr.io/${REPOSITORY,,}"
+          version="$(python3 -c 'import json;print(json.load(open("releases/candidate.json"))["version"])')"
+          args=()
+          if [ -n "$PREVIOUS" ]; then args+=(--previous "$PREVIOUS"); fi
+          python3 tools/build-release.py --registry "$registry" --component "$COMPONENT" "${args[@]}" --asset-base "https://github.com/$REPOSITORY/releases/download/v$version"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: release-kandidaat
+          path: |
+            dist/release.json
+            dist/host.tar.gz

@@ -1,0 +1,14 @@
+{
+  "/auth/{providerID}": "ea81206efdc22d3928523d31d4476dc41ee8ddc48dde5811d20c64d40cecee52",
+  "/provider/auth": "e0d98371e36ca57f9a3c5ff4614fe3d31c8ee49d913002a5e2c492721bbbbf2e",
+  "/provider/{providerID}/oauth/authorize": "ed24e9b1662b6785861c44d26d3160d4facf8226d52d43f2d494944027631709",
+  "/provider/{providerID}/oauth/callback": "317cc31fba15f87eb5306bde82621a5a3d5a015947a44c495af3e20c51f79d5c",
+  "/session": "0dfbeb5e371fd22ffd8f6325481360d178b9409eac5517e44e8c691bc27e56f8",
+  "/session/status": "301dcde2c2b7c8e6302b8cde033a227aa90cf4deea2f646c1c201409879644aa",
+  "/session/{sessionID}/prompt_async": "11517f6b3275a174a3244a65e7ad18d14532a08cf7a62f74a85efb9c1140cf39",
+  "/session/{sessionID}/abort": "f813ed95944934acda2fffb0436bbba643791c62cb26f5900728ac6a8b362e00",
+  "/session/{sessionID}/message": "e6e1320029c72ecd77acc0add461829b178f2af907382c18d5826672d9ec2d55",
+  "/mcp": "6c9727222d9e85e74283371c311c4d1697e49aaedb60227566d8d3b96568a2db",
+  "Config": "f155d39a82befb9fbd5b0bb4bb142cb578c40797228ab6d1e0b4e669ef52acca",
+  "Model": "826483f1a069a0e8ed7eb338914adb738a0783395e3d22b9bc99f36b362a1da2"
+}

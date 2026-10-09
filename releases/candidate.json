@@ -1,0 +1,152 @@
+{
+  "schema": 1,
+  "version": "0.1.0",
+  "status": "candidate",
+  "upgrade_from": [],
+  "minimum": {
+    "docker": "24.0.0",
+    "compose": "2.20.0"
+  },
+  "migration": {
+    "recovery": "full-snapshot",
+    "description": "Eerste installatie; upstream migraties bij start."
+  },
+  "images": {
+    "webtrees": null,
+    "agent": null,
+    "database": "docker.io/library/mariadb@sha256:1292844148b311e4ed4300022a996d39083f415a963e970cf47cad1b3b18e3a6"
+  },
+  "components": {
+    "webtrees-api": {
+      "version": "119809db784a0d0a8604c8457e06f12e59793f09",
+      "repository": "harrywesterman/webtrees-API",
+      "url": "https://api.github.com/repos/harrywesterman/webtrees-API/tarball/119809db784a0d0a8604c8457e06f12e59793f09",
+      "sha256": "875b3be450583fdb83a650c06e9f619ebd3f08b57a3312022513b60e8c7da079",
+      "folder": "api-mcp",
+      "archive": "tar"
+    },
+    "archiefakte": {
+      "version": "d08dcd0bdcb78afddeab53b74d1a6e01830d6860",
+      "repository": "harrywesterman/archiefakte-mcp",
+      "url": "https://api.github.com/repos/harrywesterman/archiefakte-mcp/tarball/d08dcd0bdcb78afddeab53b74d1a6e01830d6860",
+      "sha256": "8492620ffb35a8e91bbd7fd04a41b0e91097144a23a2ede74d1d7022262e1ae2",
+      "folder": null,
+      "archive": "tar"
+    },
+    "delpher": {
+      "version": "769e74bbe726b0116d447e3728c5f30f7d0acb02",
+      "repository": "raphink/newspapers-mcp",
+      "url": "https://api.github.com/repos/raphink/newspapers-mcp/tarball/769e74bbe726b0116d447e3728c5f30f7d0acb02",
+      "sha256": "fe6a68fc61efd184025fce07713386eb842276ae5acdc5210023050988386307",
+      "folder": null,
+      "archive": "tar"
+    },
+    "justlight": {
+      "version": "2.4.0",
+      "repository": "JustCarmen/webtrees-theme-justlight",
+      "url": "https://github.com/JustCarmen/webtrees-theme-justlight/releases/download/2.4.0/justlight-2.4.0.zip",
+      "sha256": "95147fac1b2c984fcbdb89175fa1aa4e8e7250473bf67e2c11510b437aea23c0",
+      "folder": "jc-theme-justlight",
+      "archive": "zip"
+    },
+    "faces": {
+      "version": "f20330a01f5ae33f685274159a9ee7e154a04a0d",
+      "repository": "UksusoFF/webtrees-faces",
+      "url": "https://api.github.com/repos/UksusoFF/webtrees-faces/tarball/f20330a01f5ae33f685274159a9ee7e154a04a0d",
+      "sha256": "844deaaf666609656d9197577d359cd8fc6c988480c0d845c38c9152496a566b",
+      "folder": "faces",
+      "archive": "tar"
+    },
+    "descendants": {
+      "version": "2.6.4",
+      "repository": "magicsunday/webtrees-descendants-chart",
+      "url": "https://github.com/magicsunday/webtrees-descendants-chart/releases/download/2.6.4/webtrees-descendants-chart.zip",
+      "sha256": "2c523c782336346f5845504ad3a55ef9d077b3e5a941705b10249bb8f8362ad4",
+      "folder": "webtrees-descendants-chart",
+      "archive": "zip"
+    },
+    "pedigree": {
+      "version": "2.7.4",
+      "repository": "magicsunday/webtrees-pedigree-chart",
+      "url": "https://github.com/magicsunday/webtrees-pedigree-chart/releases/download/2.7.4/webtrees-pedigree-chart.zip",
+      "sha256": "e4bd2b1bf6c9be109425a5d4e7ffda038a753b166c756ead4b007d3bf688c9e2",
+      "folder": "webtrees-pedigree-chart",
+      "archive": "zip"
+    },
+    "fan": {
+      "version": "3.7.1",
+      "repository": "magicsunday/webtrees-fan-chart",
+      "url": "https://github.com/magicsunday/webtrees-fan-chart/releases/download/3.7.1/webtrees-fan-chart.zip",
+      "sha256": "d83fef10011f8602f5f01548bdf41de42bab86b8ebffa4916795383606b316ae",
+      "folder": "webtrees-fan-chart",
+      "archive": "zip"
+    },
+    "module-manager": {
+      "version": "v2.0.5",
+      "repository": "Jefferson49/CustomModuleManager",
+      "url": "https://github.com/Jefferson49/CustomModuleManager/releases/download/v2.0.5/custom_module_manager_v2.0.5.zip",
+      "sha256": "7c722f81ca3ebc8f6e3df02734e2cebe55c41c700e08a665a32cdef4ee546bc4",
+      "folder": "custom_module_manager",
+      "archive": "zip"
+    },
+    "webtrees": {
+      "version": "2.2.6",
+      "image": "docker.io/nathanvaughn/webtrees@sha256:034151b61a806d985685f549791cf7599806302c4596334cdb5bb3fcf5ace101"
+    },
+    "php": {
+      "version": "8.4.26",
+      "image": "docker.io/library/php@sha256:901b0dbcd2419cc9cd307ea05e57403449ce722ccd5b32335da6e8d39f2b1ee0"
+    },
+    "mariadb": {
+      "version": "1:11.4.13+maria~ubu2404",
+      "image": "docker.io/library/mariadb@sha256:1292844148b311e4ed4300022a996d39083f415a963e970cf47cad1b3b18e3a6"
+    },
+    "node": {
+      "version": "22.23.3",
+      "image": "docker.io/library/node@sha256:154ba2f4d6fec323d28e4f4bb86bba4677f1223391a1979cf521304e03a98dfa"
+    },
+    "opencode": {
+      "version": "1.18.35",
+      "npm_integrity": "sha512-tDQKThIZ3amp8NSn3XDP2Dj5BlhRbZC0VkIxgYuf6gvRSXkseqD31j/U4KfpPwha593i8M59hdsDfz32yJx4Og=="
+    },
+    "openarchieven": {
+      "version": "remote-1",
+      "endpoint": "https://mcp.openarchieven.nl/",
+      "note": "Externe dienst; toolcontract wordt per release gecontroleerd, serverversie niet beheerbaar."
+    },
+    "onderzoeksskill": {
+      "version": "0.1.0"
+    },
+    "uv": {
+      "version": "0.9.5",
+      "wheel_sha256": [
+        "48a3542835d37882ff57d1ff91b757085525d98756712fa61cf9941d3dda8ebf",
+        "6507bbbcd788553ec4ad5a96fa19364dc0f58b023e31d79868773559a83ec181",
+        "6a046c2e833169bf26f461286aab58a2ba8d48ed2220bfcf119dcfaf87163116"
+      ]
+    },
+    "python": {
+      "version": "3.13",
+      "note": "Debian trixie Python uit vastgezet Node-image; exacte pakketversie wordt in build-attestatie vastgelegd."
+    },
+    "research-template": {
+      "version": "e94d114523cba4c4a227390e20647bb36c8a2601",
+      "repository": "harrywesterman/stamboom-template",
+      "url": "https://api.github.com/repos/harrywesterman/stamboom-template/tarball/e94d114523cba4c4a227390e20647bb36c8a2601",
+      "sha256": "675a054dd3a56d35bd368c2942d0ecfe6225e8a51ad7b1fd81a1e933427063cb",
+      "folder": null,
+      "archive": "tar"
+    },
+    "composer": {
+      "version": "2.8.12",
+      "image": "docker.io/library/composer@sha256:5248900ab8b5f7f880c2d62180e40960cd87f60149ec9a1abfd62ac72a02577c"
+    },
+    "imagick": {
+      "version": "3.8.1",
+      "url": "https://pecl.php.net/get/imagick-3.8.1.tgz",
+      "sha256": "3a3587c0a524c17d0dad9673a160b90cd776e836838474e173b549ed864352ee",
+      "archive": "tar"
+    }
+  },
+  "extra_modules": {}
+}
