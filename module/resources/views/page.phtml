@@ -4,13 +4,18 @@ use Fisharebest\Webtrees\Http\RequestHandlers\PendingChanges;
 use Openvoorouders\FamilyStart;
 use Fisharebest\Webtrees\View;
 $states = ['starting'=>'Starten','running'=>'Bezig','stopping'=>'Wordt gestopt','stopped'=>'Gestopt','complete'=>'Afgerond','failed'=>'Mislukt','interrupted'=>'Onderbroken'];
+$researchProviders = array_filter($providers['all'] ?? [], static fn($p) => in_array($p['id'], $providers['configured'] ?? [], true));
+foreach ($researchProviders as &$p) {
+    if (isset($providers['configured_models'][$p['id']])) $p['models'] = array_intersect_key($p['models'] ?? [], array_flip($providers['configured_models'][$p['id']]));
+}
+unset($p);
 $form = static function (string $action) use ($module, $tab): void { ?>
 <form method="post" action="<?= e($module->url()) ?>" class="mb-4"><?= csrf_field() ?>
 <input type="hidden" name="do" value="<?= e($action) ?>"><input type="hidden" name="tab" value="<?= e($tab) ?>">
 <?php };
 ?>
 <style>
-.ovo {max-width:1040px;margin:2rem auto;color:inherit}.ovo h1{font-size:2.2rem}.ovo nav{display:flex;gap:1.5rem;flex-wrap:wrap;border-bottom:1px solid #ccc;padding:1rem 0;margin-bottom:2rem}.ovo label{display:block;margin:.7rem 0}.ovo input:not([type=checkbox]),.ovo select,.ovo textarea{display:block;width:100%;max-width:38rem;padding:.55rem;border:1px solid #888;border-radius:4px;background:var(--bs-body-bg,#fff);color:inherit}.ovo fieldset{border-top:1px solid #ccc;margin:1.6rem 0;padding-top:1rem}.ovo legend{font-size:1.15rem}.ovo button{padding:.65rem 1.2rem;border:0;border-radius:4px;background:#28594f;color:white}.ovo pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:36rem;overflow:auto}.ovo td,.ovo th{padding:.5rem;text-align:left}.ovo small{display:block}.ovo .notice{border-left:4px solid #28594f;padding:1rem;background:#28594f12}.ovo details{margin:1rem 0}
+.ovo {max-width:1040px;margin:2rem auto;color:inherit}.ovo h1{font-size:2.2rem}.ovo nav{display:flex;gap:1.5rem;flex-wrap:wrap;border-bottom:1px solid #ccc;padding:1rem 0;margin-bottom:2rem}.ovo label{display:block;margin:.7rem 0}.ovo input:not([type=checkbox]),.ovo select,.ovo textarea{display:block;width:100%;max-width:38rem;padding:.55rem;border:1px solid #888;border-radius:4px;background:var(--bs-body-bg,#fff);color:inherit}.ovo fieldset{border-top:1px solid #ccc;margin:1.6rem 0;padding-top:1rem}.ovo legend{font-size:1.15rem}.ovo button{padding:.65rem 1.2rem;border:0;border-radius:4px;background:#28594f;color:white}.ovo pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:36rem;overflow:auto}.ovo td,.ovo th{padding:.5rem;text-align:left}.ovo small{display:block}.ovo .notice{border-left:4px solid #28594f;padding:1rem;background:#28594f12}.ovo details{margin:1rem 0}.ovo .ovo-log{height:34rem;max-height:65vh;overflow-y:auto;overflow-anchor:none;background:#16242a;color:#e6f0ed;border-radius:6px;padding:1.2rem;font-family:monospace}.ovo .ovo-log article{border-top:1px solid #ffffff26;padding:.8rem 0}.ovo .ovo-log pre{max-height:none;margin:.5rem 0}.ovo .ovo-log details{margin:.5rem 0}
 </style>
 <main class="ovo">
 <p>OPENVOOROUDERS · <?= e($release['version']) ?></p>
@@ -59,17 +64,17 @@ $form = static function (string $action) use ($module, $tab): void { ?>
 <p>Stel een vrije vraag of noem een persoon met het webtrees-ID. De agent leest eerdere dossiers, vermeldt bronnen en zet wijzigingen klaar voor jouw beoordeling in webtrees. Er loopt één onderzoek tegelijk.</p>
 <?php $form('research') ?>
 <label>Nieuw of vervolgonderzoek<select name="continue"><option value="">Nieuw onderzoek</option><?php foreach ($jobs as $job): if (!in_array($job['state'], ['starting','running','stopping'], true)): ?><option value="<?= e($job['id']) ?>"><?= e($job['prompt']) ?><?= $job['private'] ? ' · privé (vink hieronder privégegevens aan)' : '' ?></option><?php endif; endforeach ?></select></label>
-<?php if (!count($providers['connected'] ?? [])): ?>
+<?php if (!count($researchProviders)): ?>
 <p class="notice">Stel eerst je AI in. Je kunt een provider aanmelden of je eigen modelserver koppelen. <a href="<?= e($module->url(['tab'=>'instellingen'])) ?>">Naar AI instellen</a>.</p>
 <?php endif ?>
 <label>Provider<select name="provider" id="ovo-provider" required aria-describedby="ovo-provider-help">
 <option value="">Kies zelf een provider</option>
-<?php foreach ($providers['all'] ?? [] as $p): ?><option value="<?= e($p['id']) ?>" data-connected="<?= in_array($p['id'], $providers['connected'] ?? [], true) ? '1' : '0' ?>"><?= e($p['name']) ?><?= in_array($p['id'], $providers['connected'] ?? [], true) ? ' · verbonden' : ' · aanmelden nodig' ?></option><?php endforeach ?>
+<?php foreach ($researchProviders as $p): ?><option value="<?= e($p['id']) ?>" data-connected="<?= in_array($p['id'], $providers['connected'] ?? [], true) ? '1' : '0' ?>"><?= e($p['name']) ?><?= in_array($p['id'], $providers['connected'] ?? [], true) ? ' · verbonden' : ' · aanmelden nodig' ?></option><?php endforeach ?>
 </select></label>
 <p id="ovo-provider-help" role="status">Kies een provider. Er wordt niets automatisch geselecteerd.</p>
 <label>Model<select name="model" id="ovo-model" required aria-describedby="ovo-model-help">
 <option value="">Kies een model van je provider</option>
-<?php foreach ($providers['all'] ?? [] as $p): ?><optgroup label="<?= e($p['name']) ?>" data-provider="<?= e($p['id']) ?>">
+<?php foreach ($researchProviders as $p): ?><optgroup label="<?= e($p['name']) ?>" data-provider="<?= e($p['id']) ?>">
 <?php foreach ($p['models'] ?? [] as $id=>$m): $tools = $m['capabilities']['toolcall'] ?? $m['tool_call'] ?? false; $image = $m['capabilities']['input']['image'] ?? in_array('image', $m['modalities']['input'] ?? [], true); ?>
 <option value="<?= e($id) ?>" data-tools="<?= $tools ? '1' : '0' ?>" data-image="<?= $image ? '1' : '0' ?>"><?= e($m['name'] ?? $id) ?> · <?= e($id) ?><?= $tools ? '' : ' · geen bevestigd toolgebruik' ?><?= $image ? ' · kan afbeeldingen lezen' : '' ?></option>
 <?php endforeach ?></optgroup><?php endforeach ?>
@@ -117,13 +122,17 @@ $form = static function (string $action) use ($module, $tab): void { ?>
 <?php if ($details): ?>
 <h3>Gesprek en voortgang</h3>
 <p><a href="<?= e($module->url(['job'=>$details['job']['id']])) ?>">Voortgang vernieuwen</a> · Antwoorden en bronacties worden automatisch bijgewerkt.</p>
+<label><input type="checkbox" id="ovo-follow" checked> Nieuwe uitvoer automatisch volgen</label>
 <p id="ovo-live-status" role="status">Live voortgang verbonden.</p>
-<div id="ovo-live-progress"><?= view('openvoorouders::progress', ['details'=>$details]) ?></div>
+<div id="ovo-live-progress" class="ovo-log" tabindex="0" aria-label="Doorlopend onderzoekslog"><?= view('openvoorouders::progress', ['details'=>$details]) ?></div>
 <?php View::push('javascript') ?>
 <script>
 (() => {
     const root = document.getElementById('ovo-live-progress');
     const notice = document.getElementById('ovo-live-status');
+    const follow = document.getElementById('ovo-follow');
+    root.addEventListener('scroll', () => { if (root.scrollHeight - root.scrollTop - root.clientHeight > 60) follow.checked = false; });
+    follow.addEventListener('change', () => { if (follow.checked) root.scrollTop = root.scrollHeight; });
     const url = <?= json_encode($module->url(['job'=>$details['job']['id'], 'progress'=>'1']), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?>;
     const active = () => ['starting', 'running', 'stopping'].includes(root.firstElementChild?.dataset.state);
     const refresh = async () => {
@@ -142,7 +151,11 @@ $form = static function (string $action) use ($module, $tab): void { ?>
             if (!selection?.isCollapsed && (root.contains(selection.anchorNode) || root.contains(selection.focusNode))) {
                 notice.textContent = 'Live volgen blijft actief. Geselecteerde tekst wordt niet vervangen.';
             } else {
-                if (fragment.outerHTML !== root.firstElementChild.outerHTML) root.replaceChildren(fragment);
+                if (fragment.outerHTML !== root.firstElementChild.outerHTML) {
+                    const position = root.scrollTop;
+                    root.replaceChildren(fragment);
+                    root.scrollTop = follow.checked ? root.scrollHeight : position;
+                }
                 const card = Array.from(document.querySelectorAll('[data-ovo-job]')).find(card => card.dataset.ovoJob === fragment.dataset.job);
                 if (card) {
                     card.querySelector('.ovo-job-state').textContent = fragment.dataset.label;
@@ -158,6 +171,7 @@ $form = static function (string $action) use ($module, $tab): void { ?>
         } finally { clearTimeout(timeout); }
         if (active()) setTimeout(refresh, delay);
     };
+    if (follow.checked) root.scrollTop = root.scrollHeight;
     refresh();
 })();
 </script>

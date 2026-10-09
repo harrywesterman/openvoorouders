@@ -1,6 +1,10 @@
 <?php
 $labels = ['starting'=>'Starten','running'=>'Bezig','stopping'=>'Wordt gestopt','stopped'=>'Gestopt','complete'=>'Afgerond','failed'=>'Mislukt','interrupted'=>'Onderbroken'];
 $tools = ['pending'=>'Wacht','running'=>'Bezig','completed'=>'Afgerond','error'=>'Mislukt'];
+$format = static function ($value): string {
+    $text = is_string($value) ? $value : json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    return mb_strlen($text) > 100000 ? mb_substr($text, 0, 100000) . "\n[Weergave ingekort; de volledige uitvoer blijft in OpenCode bewaard.]" : $text;
+};
 $job = $details['job'];
 $active = in_array($job['state'], ['starting','running','stopping'], true);
 $visible = false;
@@ -12,6 +16,9 @@ $visible = false;
 <?php if (isset($message['info']['error'])): $visible = true; ?><p role="alert">De provider of een bronactie is mislukt. Controleer de instellingen; er is geen andere provider gekozen.</p><?php endif ?>
 <?php foreach ($message['parts'] ?? [] as $part): if (($part['type'] ?? '') === 'text'): if ($assistant && trim($part['text'] ?? '') !== '') $visible = true; ?><pre><?= e($part['text'] ?? '') ?></pre>
 <?php elseif (($part['type'] ?? '') === 'tool'): $visible = true; ?><p>Bronactie: <?= e($part['tool'] ?? 'Onbekend') ?> · <?= e($tools[$part['state']['status'] ?? ''] ?? 'Onbekend') ?></p>
+<?php foreach (['input'=>'Opdracht aan de tool', 'output'=>'Antwoord van de tool', 'error'=>'Foutmelding'] as $field=>$label): if (isset($part['state'][$field])): ?>
+<details open><summary><?= e($label) ?></summary><pre><?= e($format($part['state'][$field])) ?></pre></details>
+<?php endif; endforeach ?>
 <?php endif; endforeach ?></article>
 <?php endforeach ?>
 <?php if ($active && !$visible): ?><p>Het model bereidt een antwoord of bronactie voor. Er is nog geen zichtbare uitvoer; nieuwe tekst verschijnt hier automatisch.</p><?php endif ?>

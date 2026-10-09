@@ -156,24 +156,42 @@ def model_capabilities(provider, model):
 
 def clean_export(value):
     secrets_to_remove = {KEY}
-    secret_names = {'key', 'apikey', 'access', 'refresh', 'token', 'secret', 'password', 'authorization', 'webtrees_token'}
+    secret_names = {'key', 'apikey', 'access', 'refresh', 'token', 'secret', 'password', 'authorization', 'webtreestoken', 'accesstoken', 'refreshtoken', 'clientsecret'}
+    def sensitive(name):
+        return re.sub('[^a-z]', '', name.lower()) in secret_names
     def collect(item):
         if isinstance(item, dict):
             for k, v in item.items():
-                if k.lower() in secret_names and isinstance(v, str) and len(v) >= 8: secrets_to_remove.add(v)
+                if sensitive(k) and isinstance(v, str) and v: secrets_to_remove.add(v)
                 else: collect(v)
         elif isinstance(item, list):
             for v in item: collect(v)
     for file in [Path.home() / '.local/share/opencode/auth.json', Path.home() / '.config/opencode/opencode.json', DATA / 'engine-config.json']:
         if file.exists(): collect(json.loads(file.read_text()))
     def scrub(item):
-        if isinstance(item, dict): return {k: scrub(v) for k, v in item.items()}
+        if isinstance(item, dict): return {k: '[sleutel verwijderd]' if sensitive(k) else scrub(v) for k, v in item.items()}
         if isinstance(item, list): return [scrub(v) for v in item]
         if isinstance(item, str):
             for secret in sorted(secrets_to_remove, key=len, reverse=True): item = item.replace(secret, '[sleutel verwijderd]')
             return re.sub(r'([?&](?:token|api_key|key|access_token|signature|sig)=)[^&\s]+', r'\1[verwijderd]', item, flags=re.I)
         return item
     return scrub(value)
+
+
+def visible_progress(row, messages):
+    visible = []
+    for message in messages:
+        info = message.get('info', {})
+        parts = []
+        for part in message.get('parts', []):
+            if part.get('type') == 'text':
+                parts.append({'type': 'text', 'text': part.get('text', '')})
+            elif part.get('type') == 'tool':
+                state = part.get('state', {})
+                parts.append({'type': 'tool', 'tool': part.get('tool', ''),
+                              'state': {k: state[k] for k in ('status', 'input', 'output', 'error') if k in state}})
+        visible.append({'info': {'role': info.get('role', ''), **({'error': True} if info.get('error') else {})}, 'parts': parts})
+    return clean_export({'job': {k: v for k, v in dict(row).items() if k != 'session'}, 'messages': visible})
 
 
 def monitor(job_id, session, directory):
@@ -255,7 +273,17 @@ def dispatch(method, path, body):
         expected = json.loads(installed.read_text())['components']['opencode']['version'] if installed.exists() else health.get('version')
         return {"ok": bool(health.get('healthy')) and health.get('version') == expected, 'opencode': health.get('version')}
     if method == "GET" and path == "/providers":
-        return engine("GET", "/provider")
+        providers = engine("GET", "/provider")
+        config = engine('GET', '/config')
+        custom = config.get('provider', {}) if isinstance(config, dict) else {}
+        configured = set(custom)
+        auth_file = Path.home() / '.local/share/opencode/auth.json'
+        if auth_file.exists(): configured.update(json.loads(auth_file.read_text()))
+        for provider in providers.get('all', []):
+            if any(os.environ.get(name) for name in provider.get('env', [])): configured.add(provider['id'])
+        providers['configured'] = sorted(configured)
+        providers['configured_models'] = {name: list(settings['models']) for name, settings in custom.items() if settings.get('models')}
+        return providers
     if method == "GET" and path == "/auth-methods":
         return engine("GET", "/provider/auth")
     if method == "GET" and path == "/consent":
@@ -313,14 +341,14 @@ def dispatch(method, path, body):
                 if not file.is_symlink() and file.is_file() and file.stat().st_size < 1024**2 and file.resolve().is_relative_to(base.resolve()):
                     dossiers[profile + '/' + str(file.relative_to(base))] = file.read_text()
         return clean_export({'conversations': output, 'dossiers': dossiers})
-    match = re.fullmatch(r"/jobs/([a-f0-9]{32})(/stop)?", path)
+    match = re.fullmatch(r"/jobs/([a-f0-9]{32})(/stop|/progress)?", path)
     if match:
         with MUTEX, database() as con:
             row = con.execute("SELECT * FROM jobs WHERE id=?", (match[1],)).fetchone()
             if row is None:
                 raise ValueError("Onderzoek bestaat niet.")
             directory = DATA / ("private" if row["private"] else "public")
-            if match[2] and method == "POST":
+            if match[2] == "/stop" and method == "POST":
                 if row['state'] not in ('starting', 'running', 'stopping'):
                     raise ValueError('Dit onderzoek is al afgerond.')
                 engine("POST", f"/session/{row['session']}/abort", {}, directory)
@@ -328,8 +356,9 @@ def dispatch(method, path, body):
                 state = 'stopped' if status.get(row['session'], {}).get('type', 'idle') == 'idle' else 'stopping'
                 con.execute("UPDATE jobs SET state=? WHERE id=?", (state, row["id"]))
                 return {"state": state}
-            if not match[2] and method == "GET":
-                return {"job": dict(row), "messages": engine("GET", f"/session/{row['session']}/message", directory=directory)}
+            if match[2] in (None, '/progress') and method == "GET":
+                messages = engine("GET", f"/session/{row['session']}/message", directory=directory)
+                return visible_progress(row, messages) if match[2] else {"job": dict(row), "messages": messages}
     if method == "POST" and path == "/consent":
         with MUTEX, database() as con:
             if busy() or maintenance():

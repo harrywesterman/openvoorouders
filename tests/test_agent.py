@@ -158,6 +158,34 @@ class AgentTests(unittest.TestCase):
         self.assertNotIn(key,text);self.assertNotIn('temporary-token',text);self.assertNotIn(a.KEY,text)
         self.assertIn('sleutel verwijderd',text)
 
+    def test_visible_progress_includes_tool_exchange_but_excludes_secrets_and_reasoning(self):
+        key='1234'
+        a.dispatch('POST','/providers/custom',{'provider':'eigen-test','name':'Lokaal','url':'http://host.docker.internal:11434/v1','model':'test','key':key})
+        row={'id':'a'*32,'session':'hidden-session','state':'running'}
+        messages=[{'info':{'role':'assistant','authorization':'hidden-auth'},'parts':[
+            {'type':'reasoning','text':'hidden-reasoning'},
+            {'type':'tool','tool':'webtrees_search-general','state':{'status':'completed',
+             'input':{'query':'Familienaam','Authorization':'unknown-token'},'output':'Bronnen: '+key}},
+            {'type':'text','text':'Zichtbaar antwoord'}]}]
+        result=a.visible_progress(row,messages)
+        text=json.dumps(result)
+        for secret in [key,'hidden-session','hidden-auth','hidden-reasoning','unknown-token']:
+            self.assertNotIn(secret,text)
+        self.assertIn('Familienaam',text);self.assertIn('Zichtbaar antwoord',text)
+        self.assertIn('sleutel verwijderd',text)
+
+    def test_provider_choices_only_mark_explicit_configuration(self):
+        auth=self.home/'.local/share/opencode/auth.json';auth.parent.mkdir(parents=True)
+        auth.write_text(json.dumps({'authenticated':{'type':'api','key':'private-key'}}))
+        self.patch.stop()
+        def engine(method,path,body=None,directory=None):
+            if path=='/provider': return {'all':[{'id':'free-default'},{'id':'eigen-local'},{'id':'authenticated'}], 'connected':['free-default','authenticated','eigen-local']}
+            if path=='/config': return {'provider':{'eigen-local':{'models':{'chosen-model':{}}}}}
+        with patch.object(a,'engine',side_effect=engine): result=a.dispatch('GET','/providers',{})
+        self.assertEqual(result['configured'],['authenticated','eigen-local'])
+        self.assertEqual(result['configured_models'],{'eigen-local':['chosen-model']})
+        self.assertEqual(len(result['all']),3)  # Settings retain the complete catalogue.
+
     def test_adapter_requires_secret_for_browser_access(self):
         # Restore real threading start just for the HTTP server.
         self.threads.stop()

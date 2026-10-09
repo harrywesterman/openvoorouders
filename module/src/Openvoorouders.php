@@ -120,7 +120,7 @@ final class Openvoorouders extends AbstractModule implements ModuleCustomInterfa
             $id = (string) ($query['job'] ?? '');
             if (!preg_match('/^[a-f0-9]{32}$/', $id)) return response('Ongeldig onderzoek.', 400);
             try {
-                $details = $this->agent('GET', '/jobs/' . $id);
+                $details = $this->agent('GET', '/jobs/' . $id . '/progress');
                 return response(view('openvoorouders::progress', ['details'=>$details]), 200)
                     ->withHeader('Cache-Control', 'no-store');
             } catch (\Throwable $e) {
@@ -133,7 +133,7 @@ final class Openvoorouders extends AbstractModule implements ModuleCustomInterfa
             if ($tab === 'onderzoek') {
                 $model = $this->agent('GET', '/providers');
                 $jobs = $this->agent('GET', '/jobs');
-                if (preg_match('/^[a-f0-9]{32}$/', (string) ($query['job'] ?? ''))) $details = $this->agent('GET', '/jobs/' . $query['job']);
+                if (preg_match('/^[a-f0-9]{32}$/', (string) ($query['job'] ?? ''))) $details = $this->agent('GET', '/jobs/' . $query['job'] . '/progress');
             }
             if ($tab === 'instellingen') {
                 $model = $this->agent('GET', '/providers');

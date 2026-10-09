@@ -149,12 +149,12 @@
       "archive": "tar"
     },
     "agent-adapter": {
-      "version": "64e2ccefb56d19ded2317ef87661a549f9add5a91c932f209424ef464cc6dc44",
-      "source_sha256": "64e2ccefb56d19ded2317ef87661a549f9add5a91c932f209424ef464cc6dc44"
+      "version": "f73120738d24a7f7be56f6ba92e5294b38ea74f71f880b662a27fc6d05e85f0d",
+      "source_sha256": "f73120738d24a7f7be56f6ba92e5294b38ea74f71f880b662a27fc6d05e85f0d"
     },
     "onderzoeksinterface": {
-      "version": "34d6257dea7427c744726b5d44c10df1c38f452e957663e2ac636f6fc8a5892c",
-      "source_sha256": "34d6257dea7427c744726b5d44c10df1c38f452e957663e2ac636f6fc8a5892c"
+      "version": "647e4b119ed9b8f1248e5a9f5bd4ff8a500b30c2fbcdfe2a9285f4428e6db915",
+      "source_sha256": "647e4b119ed9b8f1248e5a9f5bd4ff8a500b30c2fbcdfe2a9285f4428e6db915"
     },
     "hostbeheer": {
       "version": "d900d730f181855c0033107e0655b74d6fdf686784913a83979e58737130f163",
