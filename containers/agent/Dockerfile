@@ -17,7 +17,9 @@ COPY agent/ /opt/agent/
 COPY release.json /opt/agent/release.json
 COPY skills/ /opt/skills/
 COPY tools/research-template/docs/werkwijze/ /opt/skills/nederlands-onderzoek/references/
-RUN chmod -R a+rX /opt/tools /opt/skills /opt/agent && mkdir -p /workspace /opt/ovo-control
+RUN chmod -R a+rX /opt/tools /opt/skills /opt/agent \
+ && mkdir -p /workspace /opt/ovo-control /home/agent/.local/state /home/agent/.local/share/opencode /home/agent/.config/opencode \
+ && chown -R 10001:10001 /home/agent
 ENV PATH="/opt/uv/bin:${PATH}" HOME=/home/agent
 USER 10001:10001
 WORKDIR /workspace

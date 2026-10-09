@@ -12,6 +12,10 @@ Dit is een implementatie van de eerste releasekandidaat. Er is nog geen stabiele
 - Pinned OpenCode 1.18.35: geïsoleerd gestart met een lege home, server-, configuratie-, provider-, model-, OAuth- en sessiecontracten gecontroleerd. Geen betaalde AI-aanroepen of bestaande gebruikersaccounts gebruikt.
 - Alle gebundelde release-/bronarchieven zijn gedownload en met hun vastgelegde checksums gecontroleerd.
 
+## Ubuntu-test-VM
+
+Op 9 oktober 2026 zijn alle 51 Python-tests ook geslaagd op Ubuntu 26.04.1 LTS (AMD64). Docker Engine 29.9.0 en Compose 5.6.0 zijn via de officiële Docker-APT-repository geïnstalleerd. De tests gebruiken `TMPDIR=/var/tmp` zodat de vrije-ruimtecontrole de gewone schijf meet, niet de kleine RAM-schijf op `/tmp`. Dit bewijst nog geen geslaagde containerinstallatie; daarvoor draait afzonderlijk `tests/docker_smoke.py` met echte MariaDB, webtrees en MCP-processen.
+
 ## Nog vereist vóór stabiele vrijgave
 
 - Images daadwerkelijk bouwen op AMD64 en ARM64. Controleer Python-, PHP-, Composer-, uv- en native bibliotheekversies in de buildattestatie. Bouwafhankelijkheden worden niet allemaal hermetisch uit een eigen pakketarchief gehaald; de uiteindelijke runtime-images zijn wel met digest vastgezet.

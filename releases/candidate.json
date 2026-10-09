@@ -149,8 +149,8 @@
       "archive": "tar"
     },
     "agent-adapter": {
-      "version": "93cbe9adeb732947650e9801d87ef9e51a3f5fa25652796f1aa867aca974e1df",
-      "source_sha256": "93cbe9adeb732947650e9801d87ef9e51a3f5fa25652796f1aa867aca974e1df"
+      "version": "4ad4dd03eee982cab4976b56245f8b1549fcd65a5e1542c8142e6dcea25e66b9",
+      "source_sha256": "4ad4dd03eee982cab4976b56245f8b1549fcd65a5e1542c8142e6dcea25e66b9"
     },
     "onderzoeksinterface": {
       "version": "6edecc43cf291637b6f30218f7e4bcadb609f24db2078eef5d7f33ccb34fa516",

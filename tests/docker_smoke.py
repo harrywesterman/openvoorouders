@@ -30,12 +30,15 @@ from openvoorouders.storage import atomic
 
 def main():
     if os.geteuid()!=0: raise SystemExit('Deze geïsoleerde proef vereist root voor bestandsownership.')
+    existing=subprocess.check_output(['docker','ps','-aq','--filter','label=com.docker.compose.project=openvoorouders'],text=True).strip()
+    if existing: raise SystemExit('Er bestaan al Openvoorouders-containers. Gebruik een lege testhost.')
     manifest=json.loads(Path(sys.argv[1]).read_text())
     archive=Path(sys.argv[2]).resolve()
     if hashlib.sha256(archive.read_bytes()).hexdigest()!=manifest['host']['sha256']: raise RuntimeError('Hostpakket-checksum ongeldig.')
     root=Path(tempfile.mkdtemp(prefix='openvoorouders-ci-'))
     runtime=Docker(root)
     report={}
+    succeeded=False
     try:
         for name in ['data/database','data/webtrees','data/modules','data/research','data/opencode','data/agent-config','secrets','control','host']:
             (root/name).mkdir(parents=True,exist_ok=True)
@@ -89,7 +92,11 @@ def main():
             php="$p=new PDO('mysql:host=database;dbname=webtrees','webtrees',trim(file_get_contents('/run/secrets/database')),[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);$s=stream_get_contents(STDIN);echo json_encode($p->query($s)->fetchAll(PDO::FETCH_ASSOC));"
             command=['docker','compose','--project-name','openvoorouders','--env-file',str(root/'compose.env'),'-f',str(root/'compose.yaml'),'exec','-T','webtrees','php','-r',php]
             return json.loads(subprocess.check_output(command,input=statement,text=True))
-        records=sql("SELECT xref,new_gedcom FROM wt_change WHERE status='pending'")
+        records=sql("SELECT xref,new_gedcom FROM wt_change WHERE status='pending' UNION ALL SELECT i_id AS xref,i_gedcom AS new_gedcom FROM wt_individuals")
+        if not any('CI persoon' in r['new_gedcom'] and '\n1 FAMC @' in r['new_gedcom'] for r in records):
+            raise RuntimeError('Beginpersoon of ouderverband ontbreekt na opslaan.')
+        if not any('CI vader' in r['new_gedcom'] and '\n1 FAMS @' in r['new_gedcom'] for r in records):
+            raise RuntimeError('Vader of familieverband ontbreekt na opslaan.')
         if any('0 @@' in r['new_gedcom'] for r in records):raise RuntimeError('Een opgeslagen persoon mist zijn echte XREF.')
         report['gedcom_xref_integrity']=True
         # Starting with an unknown model mints/configures MCP but can never call a paid provider.
@@ -121,10 +128,14 @@ def main():
         if scan.read_text()!='scan fixture' or (root/'secrets/agent').read_text()!=values['agent']:raise RuntimeError('Media/geheimen niet hersteld.')
         report['real_snapshot_upgrade_fixture_full_restore']=True
         print(json.dumps(report,indent=2))
+        succeeded=True
     finally:
         # Only this newly generated CI fixture; never removes volumes or an existing installation.
-        if (root/'compose.env').exists():
-            runtime.compose('down')
-        shutil.rmtree(root)
+        if not succeeded and os.environ.get('OVO_KEEP_FAILED_FIXTURE')=='1':
+            print('Mislukte testomgeving bewaard voor diagnose: '+str(root),file=sys.stderr)
+        else:
+            if (root/'compose.env').exists():
+                runtime.compose('down')
+            shutil.rmtree(root)
 
 if __name__=='__main__':main()
