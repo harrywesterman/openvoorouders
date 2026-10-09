@@ -10,7 +10,7 @@ ENV WEBTREES_HOME=/var/www/webtrees
 WORKDIR /var/www/webtrees
 COPY tools/imagick/ /opt/imagick/
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      python3 curl mariadb-client postgresql-client unzip ca-certificates \
+      python3 curl git mariadb-client postgresql-client unzip ca-certificates \
       libmagickwand-dev libpq-dev libzip-dev libicu-dev libfreetype6-dev libjpeg62-turbo-dev libpng-dev \
       autoconf g++ make pkg-config \
  && cd /opt/imagick && phpize && ./configure && make -j2 && make install \

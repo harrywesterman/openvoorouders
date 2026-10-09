@@ -15,6 +15,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    env:
+      DOCKER_CONFIG: ${{ runner.temp }}/ovo-docker-config
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - run: python3 -m unittest discover -s tests
@@ -36,6 +38,8 @@ jobs:
           args=()
           if [ -n "$PREVIOUS" ]; then args+=(--previous "$PREVIOUS"); fi
           python3 tools/build-release.py --registry "$registry" --component "$COMPONENT" "${args[@]}" --asset-base "https://github.com/$REPOSITORY/releases/download/v$version"
+      - name: Echte containerproef zonder betaalde AI
+        run: sudo --preserve-env=DOCKER_CONFIG python3 tests/docker_smoke.py dist/release.json dist/host.tar.gz
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: release-kandidaat

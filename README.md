@@ -69,6 +69,47 @@ Onderzoek vereist toolgebruik. Dossiers staan in `data/research/public/dossiers`
 
 ## Ontwikkelen en releases
 
+### Tijdelijke beheerstoegang voor een test-VM
+
+Voor testen via SSH kan een beheerder tijdelijk wachtwoordloze sudo instellen. Dit geeft de gekozen gebruiker volledige rootrechten. Voor een gewone installatie is dit niet nodig: daarbij voer je het sudo-wachtwoord zelf in.
+
+Meld je aan op de Ubuntu-VM en open een afzonderlijk sudoers-bestand met de gecontroleerde editor:
+
+```sh
+ssh harry@openvoorouders.local.westermanonline.com
+sudo visudo -f /etc/sudoers.d/openvoorouders-test
+```
+
+Voer je huidige Ubuntu-wachtwoord in wanneer sudo daarom vraagt. Voeg deze ene regel toe; vervang `harry` wanneer je een andere Linux-gebruiker gebruikt:
+
+```sudoers
+harry ALL=(ALL:ALL) NOPASSWD: ALL
+```
+
+Bij nano: sla op met Ctrl+O, Enter en sluit met Ctrl+X. Bij vi: druk op Esc, typ `:wq` en druk op Enter. Accepteer geen syntaxisfouten; `visudo` controleert het bestand voordat het wordt geïnstalleerd. Controleer daarna:
+
+```sh
+sudo chmod 0440 /etc/sudoers.d/openvoorouders-test
+sudo visudo -c
+sudo -k
+sudo -n true && echo 'Wachtwoordloze sudo werkt'
+```
+
+Verwijder de tijdelijke toegang na het testen:
+
+```sh
+sudo rm /etc/sudoers.d/openvoorouders-test
+sudo -k
+```
+
+Geef de test-VM minimaal 4 GiB RAM, bij voorkeur 8 GiB. Wanneer `/tmp` een kleine RAM-schijf is, voer je de tests op de gewone schijf uit:
+
+```sh
+TMPDIR=/var/tmp python3 -m unittest discover -s tests -v
+```
+
+### Lokale controles en imagebuilds
+
 ```sh
 python3 -m unittest discover -s tests -v
 php -d zend.assertions=1 -d assert.exception=1 tests/family-start.php
