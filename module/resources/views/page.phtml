@@ -29,12 +29,14 @@ $form = static function (string $action) use ($module, $tab): void { ?>
 <?php if ($message): ?><p role="status"><?= e($message) ?></p><?php endif ?>
 <?php if (!$tree): ?>
 <h2>Welke stamboom gaan we onderzoeken?</h2>
-<p>Begin met een nieuwe stamboom en vertel wat je al weet. Deze installatie is voor één onderzoeker.</p>
+<p>Deze installatie is voor één onderzoeker en één actieve stamboom.</p>
+<?php if (!count($trees)): ?>
+<p>Maak je stamboom aan en vertel wat je al weet.</p>
 <?php $form('create-tree') ?>
 <label>Naam van je stamboom<input name="title" value="Mijn stamboom" maxlength="100" required></label>
 <button>Nieuwe stamboom en familiestart</button></form>
-<?php if (count($trees)): ?>
-<p>Of kies een bestaande stamboom. Een GEDCOM kun je eerst via het webtrees-beheerpaneel importeren.</p>
+<?php else: ?>
+<p>Kies je bestaande stamboom. De familiestart gebruikt deze boom en maakt geen extra stamboom aan.</p>
 <?php $form('configure') ?>
 <label>Actieve stamboom<select name="tree" required><?php foreach ($trees as $t): ?><option value="<?= e((string)$t->id()) ?>"><?= e($t->title()) ?></option><?php endforeach ?></select></label>
 <button>Deze stamboom gebruiken</button></form>

@@ -5,6 +5,7 @@ namespace Openvoorouders;
 use Fisharebest\Webtrees\Auth;
 use Fisharebest\Webtrees\DB;
 use Fisharebest\Webtrees\Menu;
+use Fisharebest\Webtrees\Site;
 use Fisharebest\Webtrees\Tree;
 use Fisharebest\Webtrees\View;
 use Fisharebest\Webtrees\Registry;
@@ -45,7 +46,8 @@ final class Openvoorouders extends AbstractModule implements ModuleCustomInterfa
     public function resourcesFolder(): string { return __DIR__ . '/../resources/'; }
     public function boot(): void { View::registerNamespace('openvoorouders', $this->resourcesFolder() . 'views/'); }
     public function url(array $params = []): string {
-        return route('module-no-tree', ['module'=>$this->name(), 'action'=>'AdminResearch'] + $params);
+        $tree = $this->tree();
+        return route('module', ['module'=>$this->name(), 'action'=>'AdminResearch', 'tree'=>$tree?->name()] + $params);
     }
     public function getMenu(Tree $tree): ?Menu {
         return Auth::isAdmin() ? new Menu('Onderzoek', $this->url()) : null;
@@ -113,8 +115,22 @@ final class Openvoorouders extends AbstractModule implements ModuleCustomInterfa
 
     public function getAdminResearchAction(ServerRequestInterface $request): ResponseInterface
     {
-        $this->owner($request);
+        $user = $this->owner($request);
+        $tree = $this->tree();
+        $trees = Registry::container()->get(TreeService::class)->all();
+        if ($tree === null && count($trees) === 1) {
+            $tree = $trees->first();
+            $this->selectTree($tree, $user);
+        }
+        if ($tree !== null && Site::getPreference('DEFAULT_GEDCOM') !== $tree->name()) {
+            Site::setPreference('DEFAULT_GEDCOM', $tree->name());
+        }
         $query = $request->getQueryParams();
+        // Carry the same tree through webtrees' header, menus and research pages.
+        // Old bookmarks without a tree remain usable; progress requests stay fragments.
+        if ($tree !== null && ($query['progress'] ?? '') !== '1' && $request->getAttribute('tree')?->id() !== $tree->id()) {
+            return redirect($this->url($query));
+        }
         $tab = (string) ($query['tab'] ?? 'onderzoek');
         if (($query['progress'] ?? '') === '1') {
             $id = (string) ($query['job'] ?? '');
@@ -161,6 +177,9 @@ final class Openvoorouders extends AbstractModule implements ModuleCustomInterfa
             switch ($body['do'] ?? '') {
                 case 'create-tree':
                     if ($tree !== null) throw new \RuntimeException('De actieve boom is al ingesteld.');
+                    if (Registry::container()->get(TreeService::class)->all()->isNotEmpty()) {
+                        throw new \RuntimeException('Er bestaat al een stamboom. Gebruik die voor de familiestart.');
+                    }
                     $title = trim((string) ($body['title'] ?? 'Mijn stamboom'));
                     if ($title === '' || mb_strlen($title) > 100) throw new \InvalidArgumentException('Geef een stamboomnaam van maximaal 100 tekens.');
                     DB::connection()->transaction(function () use ($title, $user): void {
@@ -249,6 +268,7 @@ final class Openvoorouders extends AbstractModule implements ModuleCustomInterfa
     private function selectTree(Tree $tree, UserInterface $user): void {
         $this->setPreference('owner', (string) $user->id());
         $this->setPreference('tree', (string) $tree->id());
+        Site::setPreference('DEFAULT_GEDCOM', $tree->name());
         $user->setPreference(UserInterface::PREF_THEME, '_jc-theme-justlight_');
         $user->setPreference(UserInterface::PREF_LANGUAGE, 'nl');
     }

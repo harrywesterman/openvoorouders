@@ -42,6 +42,12 @@ Op de echte VM is gecontroleerd dat de owner voortgang kan lezen, een ongeldig o
 
 De eerste inhoudelijke kwartierstaatproef liet ook resterende agentproblemen zien: de onderzoeksskill was als instructiebestand beschikbaar maar niet geregistreerd voor de skill-tool, en de native read-tool weigerde dossierpaden ondanks de bedoelde profielregels. Het model probeerde bovendien herhaaldelijk de beginpersoon te identificeren en raakte in contextsamenvattingen. Deze proef is op verzoek van de gebruiker gestopt; dit is geen geslaagde inhoudelijke kwartierstaatacceptatie. Herstel en test skillregistratie, padrechten en expliciete beginpersooncontext vóór stabiele vrijgave.
 
+## Eén stamboom in familiestart en webtrees
+
+Op 9 oktober 2026 is op de gebruikers-VM de achtergebleven lege CI-boom verwijderd via de native webtrees-handler, na een volledige lokale snapshot. Westerman bleef behouden met zeven personen en 21 geaccepteerde wijzigingen. De startpagina, standaardboom, onderzoeksmenu's en familiestart verwijzen naar Westerman. Een tweede boom aanmaken via Openvoorouders wordt geweigerd. De opgeslagen familiestart en gesprekken blijven aanwezig.
+
+De containerfixture controleert aanvullend dat het wissen van alleen de modulekeuze de bestaande boom opnieuw selecteert en de webtrees-standaard instelt. Ook een directe aanmaak-POST vóór die automatische selectie moet mislukken zonder een tweede boom te maken. De eerste schone proef ontdekte een ontbrekende autoloadregistratie in de gedeelde API-bibliotheek; de build registreert nu een fallback wanneer de gedeelde trait nog niet beschikbaar is.
+
 ## Nog vereist vóór stabiele vrijgave
 
 - Functionele ARM64-containerproef uitvoeren. Controleer Python-, PHP-, Composer-, uv- en native bibliotheekversies in de buildattestatie. Bouwafhankelijkheden worden niet allemaal hermetisch uit een eigen pakketarchief gehaald; de uiteindelijke runtime-images zijn wel met digest vastgezet.

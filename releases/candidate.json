@@ -153,16 +153,16 @@
       "source_sha256": "f73120738d24a7f7be56f6ba92e5294b38ea74f71f880b662a27fc6d05e85f0d"
     },
     "onderzoeksinterface": {
-      "version": "647e4b119ed9b8f1248e5a9f5bd4ff8a500b30c2fbcdfe2a9285f4428e6db915",
-      "source_sha256": "647e4b119ed9b8f1248e5a9f5bd4ff8a500b30c2fbcdfe2a9285f4428e6db915"
+      "version": "b8b831a87c0901b0541bb085b27932e02a394e8ae5305134fed52447dc27dfe3",
+      "source_sha256": "b8b831a87c0901b0541bb085b27932e02a394e8ae5305134fed52447dc27dfe3"
     },
     "hostbeheer": {
       "version": "d900d730f181855c0033107e0655b74d6fdf686784913a83979e58737130f163",
       "source_sha256": "d900d730f181855c0033107e0655b74d6fdf686784913a83979e58737130f163"
     },
     "buildsysteem": {
-      "version": "1f59183f57b61e365da3d131b40dadc588818a3aa344588233c993531e8a7676",
-      "source_sha256": "1f59183f57b61e365da3d131b40dadc588818a3aa344588233c993531e8a7676"
+      "version": "34b04d2417568637597b4fd19e5b44b288eab8ae128bc9aeb1a06f5c89731e7b",
+      "source_sha256": "34b04d2417568637597b4fd19e5b44b288eab8ae128bc9aeb1a06f5c89731e7b"
     }
   },
   "extra_modules": {}

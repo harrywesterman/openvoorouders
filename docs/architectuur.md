@@ -20,6 +20,7 @@ flowchart LR
 
 - Onderzoekspagina's zijn webtrees-moduleacties. Iedere GET/POST controleert de ingestelde eigenaar en administratorrechten; POST gebruikt de bestaande CSRF-middleware.
 - De actieve boom wordt server-side gekozen. Browserinvoer bepaalt nooit het API-token of de technische gebruiker.
+- Een bestaande enige stamboom wordt hergebruikt wanneer de modulekeuze ontbreekt. De familiestart kan alleen een boom aanmaken wanneer er nog geen bestaat. De actieve boom is ook de standaardboom van webtrees; onderzoekspagina's en menu's gebruiken expliciet dezelfde boom in hun URL.
 - De agent luistert uitsluitend op een intern Docker-netwerk. Alle aanvragen vereisen de interne sleutel, behalve loopbackprobes voor hostcontroles. Er is geen openbare agentpoort of Docker-socket.
 - De technische gebruiker heeft alleen editorrechten op de actieve boom en geen automatische acceptatie of administratorrechten. De scope is standaard `mcp_read_privacy`; `mcp_read_member` wordt pas na toestemming voor precies de gekozen provider aangemaakt. Wijzigingen blijven voorstellen.
 - Openbare en privé-opdrachten gebruiken verschillende werkmappen. De agent mag dossiers bewerken, maar geen OpenCode-configuratie, andere werkmappen of hostbestanden. De algemene shell en niet-toegestane tools zijn geweigerd.

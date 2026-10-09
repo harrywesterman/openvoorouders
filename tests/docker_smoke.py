@@ -83,8 +83,36 @@ def main():
             except urllib.error.HTTPError as error:
                 if error.code!=expected:raise
                 text=error.read().decode();error.close();return text
+        def sql(statement):
+            # Pass statements over stdin, never interpolate them into shell code.
+            php="$p=new PDO('mysql:host=database;dbname=webtrees','webtrees',trim(file_get_contents('/run/secrets/database')),[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);$s=stream_get_contents(STDIN);echo json_encode($p->query($s)->fetchAll(PDO::FETCH_ASSOC));"
+            command=['docker','compose','--project-name','openvoorouders','--env-file',str(root/'compose.env'),'-f',str(root/'compose.yaml'),'exec','-T','webtrees','php','-r',php]
+            return json.loads(subprocess.check_output(command,input=statement,text=True))
         post('/login',{'username':values['bootstrap_username'],'password':values['bootstrap_password'],'url':base+'/admin/trees/create'})
         post(module,{'do':'create-tree','title':'CI stamboom'})
+        original=sql("SELECT gedcom_id,gedcom_name FROM wt_gedcom WHERE gedcom_id>0")
+        assert len(original)==1
+        # A lost module preference must adopt the existing tree, never offer/create another.
+        sql("DELETE FROM wt_module_setting WHERE module_name='_openvoorouders_' AND setting_name='tree'")
+        page=get(module)
+        assert 'Nieuwe stamboom en familiestart' not in page
+        active=sql("SELECT setting_value FROM wt_module_setting WHERE module_name='_openvoorouders_' AND setting_name='tree'")
+        default=sql("SELECT setting_value FROM wt_site_setting WHERE setting_name='DEFAULT_GEDCOM'")
+        assert active[0]['setting_value']==str(original[0]['gedcom_id'])
+        assert default[0]['setting_value']==original[0]['gedcom_name']
+        assert '/AdminResearch/'+original[0]['gedcom_name'] in page
+        post(module,{'do':'create-tree','title':'Onbedoelde tweede boom'},expected=400)
+        # Also refuse creation before GET has a chance to adopt the existing tree.
+        sql("DELETE FROM wt_module_setting WHERE module_name='_openvoorouders_' AND setting_name='tree'")
+        token=re.search(r'name="_csrf"[^>]*value="([^"]+)"',page)
+        try:
+            browser.open(base+module,data=urllib.parse.urlencode({'do':'create-tree','title':'Tweede boom','_csrf':token[1]}).encode(),timeout=180)
+            raise AssertionError('Tweede stamboom aangemaakt')
+        except urllib.error.HTTPError as error:
+            assert error.code==400;error.close()
+        get(module)
+        assert sql("SELECT gedcom_id,gedcom_name FROM wt_gedcom WHERE gedcom_id>0")==original
+        report['single_tree_adoption_default_and_creation_guard']=True
         family=module+'?tab=familiestart'
         post(family,{'do':'draft','tab':'familiestart','review':'1','people[self][given]':'CI persoon','people[self][surname]':'Voorouder',
                      'people[self][birth]':'ABT 1900','people[self][source]':'CI familiebron','people[father][given]':'CI vader','people[father][birth]':'1870'})
@@ -93,11 +121,6 @@ def main():
         if not draft:raise RuntimeError('Controleoverzicht ontbreekt.')
         post(family,{'do':'save-family','tab':'familiestart','draft_hash':draft[1]})
         report['family_draft_review_save']=True
-        def sql(statement):
-            # Pass statements over stdin, never interpolate them into shell code.
-            php="$p=new PDO('mysql:host=database;dbname=webtrees','webtrees',trim(file_get_contents('/run/secrets/database')),[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);$s=stream_get_contents(STDIN);echo json_encode($p->query($s)->fetchAll(PDO::FETCH_ASSOC));"
-            command=['docker','compose','--project-name','openvoorouders','--env-file',str(root/'compose.env'),'-f',str(root/'compose.yaml'),'exec','-T','webtrees','php','-r',php]
-            return json.loads(subprocess.check_output(command,input=statement,text=True))
         records=sql("SELECT xref,new_gedcom FROM wt_change WHERE status='pending' UNION ALL SELECT i_id AS xref,i_gedcom AS new_gedcom FROM wt_individuals")
         if not any('CI persoon' in r['new_gedcom'] and '\n1 FAMC @' in r['new_gedcom'] for r in records):
             raise RuntimeError('Beginpersoon of ouderverband ontbreekt na opslaan.')

@@ -75,6 +75,22 @@ def main():
     if text.count(old) != 1:
         raise RuntimeError('Webtrees MCP transportcontract is gewijzigd; beoordeel de interne HTTP-patch.')
     bridge.write_text(text.replace(old, new))
+    # The shared library has no Composer autoload mapping. Its own loader can
+    # skip registration when InstalledVersions already reports the same version.
+    # Register a fallback only when another module has not loaded it already.
+    autoload = dest / 'modules/api-mcp/autoload.php'
+    old = "require_once __DIR__ . '/vendor/jefferson49/webtrees-common/autoload.php';"
+    fallback = r'''
+if (!trait_exists('Jefferson49\\Webtrees\\Module\\ModuleCustomTrait')) {
+    $common_loader = new ClassLoader(__DIR__ . '/vendor');
+    $common_loader->addPsr4('Jefferson49\\Webtrees\\', __DIR__ . '/vendor/jefferson49/webtrees-common');
+    $common_loader->register(true);
+}
+'''
+    text = autoload.read_text()
+    if text.count(old) != 1:
+        raise RuntimeError('Webtrees API-autoloadcontract gewijzigd; beoordeel de common-library-fallback.')
+    autoload.write_text(text.replace(old, old + fallback))
     settings = dest / 'modules/api-mcp/resources/views/settings.phtml'
     text = settings.read_text().replace('Local LLMs: Allow MCP scope mcp_read_member', 'Openvoorouders: privégegevens na toestemming per provider')
     text = text.replace('It is highly recommended to activate for local LLMs only, because LLMs will get MCP read access without applying strict privacy rules.', 'Openvoorouders beheert dit uitsluitend na expliciete toestemming voor de gekozen provider. Privégegevens kunnen naar die provider worden verstuurd.')
