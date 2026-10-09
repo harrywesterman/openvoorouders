@@ -75,6 +75,15 @@ class AgentTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'loopt onderzoek'): a.research(self.body)
         self.assertEqual(sum(c[1]=='/session' for c in self.calls),1)
 
+    def test_update_sees_busy_before_engine_start_and_failed_start_releases_it(self):
+        def launch(*args):
+            self.assertTrue(a.dispatch('GET','/internal/status',{})['busy'])
+            raise RuntimeError('injected startup failure')
+        a.start_engine.side_effect=launch
+        with self.assertRaisesRegex(RuntimeError,'startup failure'):
+            a.research(self.body)
+        self.assertFalse(a.busy())
+
     def test_maintenance_rejects_new_research(self):
         (a.CONTROL/'maintenance.json').write_text('{"enabled":true}')
         with self.assertRaisesRegex(ValueError,'onderhoud'): a.research(self.body)

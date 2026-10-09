@@ -23,6 +23,7 @@ KEY = os.environ.get("OVO_AGENT_KEY") or (Path("/run/secrets/agent").read_text()
 ENGINE = os.environ.get("OVO_OPENCODE_URL", "http://127.0.0.1:4096")
 MUTEX = threading.RLock()
 PROCESS = None
+STARTING = False
 
 
 @contextlib.contextmanager
@@ -60,8 +61,20 @@ def maintenance():
 
 
 def busy():
+    if STARTING:
+        return True
     with database() as con:
         return con.execute("SELECT 1 FROM jobs WHERE state IN ('starting','running','stopping')").fetchone() is not None
+
+
+@contextlib.contextmanager
+def preparing_research():
+    global STARTING
+    STARTING = True
+    try:
+        yield
+    finally:
+        STARTING = False
 
 
 def engine(method, path, body=None, directory=None, timeout=30):
@@ -201,35 +214,36 @@ def research(body):
         token = body.get("webtrees_token", "")
         if not token:
             raise ValueError("De webtrees-koppeling ontbreekt.")
-        start_engine("private" if private else "public", token)
-        model_capabilities(provider, model)
-        directory = DATA / ("private" if private else "public")
-        previous = body.get('continue', '')
-        if previous:
-            if not re.fullmatch('[a-f0-9]{32}', previous):
-                raise ValueError('Ongeldig vervolgonderzoek.')
+        with preparing_research():
+            start_engine("private" if private else "public", token)
+            model_capabilities(provider, model)
+            directory = DATA / ("private" if private else "public")
+            previous = body.get('continue', '')
+            if previous:
+                if not re.fullmatch('[a-f0-9]{32}', previous):
+                    raise ValueError('Ongeldig vervolgonderzoek.')
+                with database() as con:
+                    row = con.execute('SELECT * FROM jobs WHERE id=?', (previous,)).fetchone()
+                if row is None or bool(row['private']) != private:
+                    raise ValueError('Vervolgonderzoek moet dezelfde privacykeuze gebruiken.')
+                session = row['session']
+            else:
+                session = engine("POST", "/session", {"title": prompt[:100]}, directory)["id"]
+            job_id = secrets.token_hex(16)
             with database() as con:
-                row = con.execute('SELECT * FROM jobs WHERE id=?', (previous,)).fetchone()
-            if row is None or bool(row['private']) != private:
-                raise ValueError('Vervolgonderzoek moet dezelfde privacykeuze gebruiken.')
-            session = row['session']
-        else:
-            session = engine("POST", "/session", {"title": prompt[:100]}, directory)["id"]
-        job_id = secrets.token_hex(16)
-        with database() as con:
-            con.execute("INSERT INTO jobs VALUES(?,?,?,?,?,?,?,?)",
-                        (job_id, session, provider, model, int(private), "starting", prompt, int(time.time())))
-        try:
-            engine("POST", f"/session/{session}/prompt_async", {"model": {"providerID": provider, "modelID": model},
-                   "parts": [{"type": "text", "text": "Actieve boom: " + body["tree"] + "\n" + prompt}]}, directory)
-            with database() as con:
-                con.execute("UPDATE jobs SET state='running' WHERE id=?", (job_id,))
-            threading.Thread(target=monitor, args=(job_id, session, directory), daemon=True).start()
-        except Exception:
-            with database() as con:
-                con.execute("UPDATE jobs SET state='failed' WHERE id=?", (job_id,))
-            raise
-        return {"id": job_id, "state": "running"}
+                con.execute("INSERT INTO jobs VALUES(?,?,?,?,?,?,?,?)",
+                            (job_id, session, provider, model, int(private), "starting", prompt, int(time.time())))
+            try:
+                engine("POST", f"/session/{session}/prompt_async", {"model": {"providerID": provider, "modelID": model},
+                       "parts": [{"type": "text", "text": "Actieve boom: " + body["tree"] + "\n" + prompt}]}, directory)
+                with database() as con:
+                    con.execute("UPDATE jobs SET state='running' WHERE id=?", (job_id,))
+                threading.Thread(target=monitor, args=(job_id, session, directory), daemon=True).start()
+            except Exception:
+                with database() as con:
+                    con.execute("UPDATE jobs SET state='failed' WHERE id=?", (job_id,))
+                raise
+            return {"id": job_id, "state": "running"}
 
 
 def dispatch(method, path, body):

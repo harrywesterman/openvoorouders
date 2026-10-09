@@ -1,8 +1,10 @@
 <?php
 declare(strict_types=1);
 // This check intentionally verifies HTTP rendering and plugin installation, not merely Apache.
-$base = 'http://127.0.0.1/login';
-$body = file_get_contents($base, false, stream_context_create(['http'=>['header'=>'User-Agent: Openvoorouders healthcheck', 'timeout'=>30]]));
+require_once __DIR__ . '/http-probe.php';
+$probe = ovoProbe();
+$body = curl_exec($probe);
+curl_close($probe);
 if ($body === false || !str_contains(strtolower($body), '<html')) {
     throw new RuntimeException('Webtrees geeft geen bruikbare pagina terug.');
 }

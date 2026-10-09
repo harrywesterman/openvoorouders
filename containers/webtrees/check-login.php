@@ -24,18 +24,21 @@ if (!$id) {
     foreach (['verified'=>'1','verified_by_admin'=>'1','canadmin'=>'0','auto_accept'=>'0'] as $key=>$value) $setting->execute([$id,$key,$value]);
 }
 $jar = tempnam(sys_get_temp_dir(), 'ovo-login-');
-$curl = curl_init();
-curl_setopt_array($curl, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_COOKIEJAR=>$jar, CURLOPT_COOKIEFILE=>$jar, CURLOPT_TIMEOUT=>30, CURLOPT_USERAGENT=>'Openvoorouders healthcheck']);
+require_once __DIR__ . '/http-probe.php';
+$curl = ovoProbe();
+$base = rtrim(getenv('BASE_URL') ?: 'http://127.0.0.1','/');
+curl_setopt_array($curl, [CURLOPT_COOKIEJAR=>$jar, CURLOPT_COOKIEFILE=>$jar]);
 try {
-    curl_setopt($curl, CURLOPT_URL, 'http://127.0.0.1/login');
     $page = curl_exec($curl);
     if (!is_string($page) || !preg_match('/name="_csrf"[^>]*value="([^"]+)"/', $page, $match)) throw new RuntimeException('Inlogformulier werkt niet.');
     curl_setopt($curl, CURLOPT_POST, true);
+    curl_setopt($curl, CURLOPT_FOLLOWLOCATION, false);
     curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query(['username'=>$credentials['username'], 'password'=>$credentials['password'], '_csrf'=>html_entity_decode($match[1]), 'url'=>rtrim(getenv('BASE_URL') ?: 'http://127.0.0.1','/') . '/my-account']));
     curl_exec($curl);
     if (curl_getinfo($curl, CURLINFO_RESPONSE_CODE) !== 302) throw new RuntimeException('Inloggen werkt niet.');
     curl_setopt($curl, CURLOPT_HTTPGET, true);
-    curl_setopt($curl, CURLOPT_URL, 'http://127.0.0.1/my-account');
+    curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($curl, CURLOPT_URL, $base . '/my-account');
     $page = curl_exec($curl);
     if (curl_getinfo($curl, CURLINFO_RESPONSE_CODE) !== 200 || !str_contains((string)$page, 'name="email"') || !str_contains((string)$page, $credentials['username'])) throw new RuntimeException('Aangemelde sessie werkt niet.');
 } finally { curl_close($curl); unlink($jar); }

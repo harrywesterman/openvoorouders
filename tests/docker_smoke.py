@@ -137,7 +137,9 @@ def main():
         succeeded=True
     finally:
         # Only this newly generated CI fixture; never removes volumes or an existing installation.
-        if not succeeded and os.environ.get('OVO_KEEP_FAILED_FIXTURE')=='1':
+        if succeeded and os.environ.get('OVO_KEEP_SUCCESS_FIXTURE')=='1':
+            print('Geslaagde testomgeving bewaard: '+str(root),file=sys.stderr)
+        elif not succeeded and os.environ.get('OVO_KEEP_FAILED_FIXTURE')=='1':
             print('Mislukte testomgeving bewaard voor diagnose: '+str(root),file=sys.stderr)
         else:
             if (root/'compose.env').exists():
