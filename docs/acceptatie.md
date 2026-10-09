@@ -48,6 +48,8 @@ Op 9 oktober 2026 is op de gebruikers-VM de achtergebleven lege CI-boom verwijde
 
 De containerfixture controleert aanvullend dat het wissen van alleen de modulekeuze de bestaande boom opnieuw selecteert en de webtrees-standaard instelt. Ook een directe aanmaak-POST vóór die automatische selectie moet mislukken zonder een tweede boom te maken. De eerste schone proef ontdekte een ontbrekende autoloadregistratie in de gedeelde API-bibliotheek; de build registreert nu een fallback wanneer de gedeelde trait nog niet beschikbaar is.
 
+Een afzonderlijk Compose-project op de VM doorliep daarna met succes schone installatie, echte login, onderhoud, automatische boomselectie, beide aanmaakweigeringen, familiestart en GEDCOM-koppelingen. Er zijn geen AI-aanroepen gedaan; alleen de nieuw aangemaakte testomgeving is opgeruimd. [CI voor broncommit 01b4556](https://github.com/harrywesterman/openvoorouders/actions/runs/37982245411) slaagde eveneens. De stamboomreparatie is actief op de gebruikers-VM. De aanvullende autoload-fallback is in het nieuwe image getest; dat image is daar nog niet geplaatst omdat inmiddels opnieuw onderzoek loopt.
+
 ## Nog vereist vóór stabiele vrijgave
 
 - Functionele ARM64-containerproef uitvoeren. Controleer Python-, PHP-, Composer-, uv- en native bibliotheekversies in de buildattestatie. Bouwafhankelijkheden worden niet allemaal hermetisch uit een eigen pakketarchief gehaald; de uiteindelijke runtime-images zijn wel met digest vastgezet.
