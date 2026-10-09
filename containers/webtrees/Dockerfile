@@ -4,6 +4,7 @@ ARG COMPOSER_BASE
 FROM ${WEBTREES_BASE} AS upstream
 FROM ${COMPOSER_BASE} AS composer
 FROM ${PHP_BASE}
+LABEL org.opencontainers.image.source="https://github.com/harrywesterman/openvoorouders"
 # Reuse the patched upstream application, with an independently pinned PHP runtime.
 ENV WEBTREES_HOME=/var/www/webtrees
 WORKDIR /var/www/webtrees

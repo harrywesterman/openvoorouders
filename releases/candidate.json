@@ -115,7 +115,8 @@
       "note": "Externe dienst; toolcontract wordt per release gecontroleerd, serverversie niet beheerbaar."
     },
     "onderzoeksskill": {
-      "version": "0.1.0"
+      "version": "73f7fd9e4b89ebaab9b56eb391288e37565dd69f3925f89875a62cd24dba4204",
+      "source_sha256": "73f7fd9e4b89ebaab9b56eb391288e37565dd69f3925f89875a62cd24dba4204"
     },
     "uv": {
       "version": "0.9.5",
@@ -146,6 +147,22 @@
       "url": "https://pecl.php.net/get/imagick-3.8.1.tgz",
       "sha256": "3a3587c0a524c17d0dad9673a160b90cd776e836838474e173b549ed864352ee",
       "archive": "tar"
+    },
+    "agent-adapter": {
+      "version": "93cbe9adeb732947650e9801d87ef9e51a3f5fa25652796f1aa867aca974e1df",
+      "source_sha256": "93cbe9adeb732947650e9801d87ef9e51a3f5fa25652796f1aa867aca974e1df"
+    },
+    "onderzoeksinterface": {
+      "version": "d542d1cba9d09eae27b9f33578066582b8c27bccb11abb7b18e1c015b30c6d93",
+      "source_sha256": "d542d1cba9d09eae27b9f33578066582b8c27bccb11abb7b18e1c015b30c6d93"
+    },
+    "hostbeheer": {
+      "version": "17dff06e8d5e231c1e2f1f279f1c2a61d24de7d0c28b5d78c4afe7a1b1e0ad87",
+      "source_sha256": "17dff06e8d5e231c1e2f1f279f1c2a61d24de7d0c28b5d78c4afe7a1b1e0ad87"
+    },
+    "buildsysteem": {
+      "version": "1f59183f57b61e365da3d131b40dadc588818a3aa344588233c993531e8a7676",
+      "source_sha256": "1f59183f57b61e365da3d131b40dadc588818a3aa344588233c993531e8a7676"
     }
   },
   "extra_modules": {}

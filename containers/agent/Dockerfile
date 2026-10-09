@@ -1,5 +1,6 @@
 ARG NODE_BASE
 FROM ${NODE_BASE}
+LABEL org.opencontainers.image.source="https://github.com/harrywesterman/openvoorouders"
 RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv python3-pip git ca-certificates curl \
  && rm -rf /var/lib/apt/lists/* \
  && useradd -m -u 10001 agent

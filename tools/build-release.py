@@ -43,8 +43,8 @@ def main():
         previous=load(args.previous)
         manifest['images'].update(previous['images'])
         # Only reuse an image if EVERY component that contributes to it is unchanged.
-        groups={'webtrees':['webtrees','php','composer','imagick','webtrees-api','justlight','faces','descendants','pedigree','fan','module-manager'],
-                'agent':['node','python','uv','opencode','webtrees-api','archiefakte','delpher','openarchieven','onderzoeksskill','research-template']}
+        groups={'webtrees':['webtrees','php','composer','imagick','webtrees-api','justlight','faces','descendants','pedigree','fan','module-manager','onderzoeksinterface','buildsysteem'],
+                'agent':['node','python','uv','opencode','webtrees-api','archiefakte','delpher','openarchieven','onderzoeksskill','research-template','agent-adapter','buildsysteem']}
         for service,names in groups.items():
             if service!=args.component and any(manifest['components'].get(n)!=previous['components'].get(n) for n in names):
                 raise RuntimeError('Ongewijzigd image bevat gewijzigde componenten: '+service)

@@ -13,6 +13,9 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+import sys
+sys.path.insert(0, str(ROOT))
+from openvoorouders.integrity import local_components
 REPOS = {
     "webtrees-api": ("harrywesterman/webtrees-API", "master", "api-mcp"),
     "archiefakte": ("harrywesterman/archiefakte-mcp", "main", None),
@@ -111,6 +114,7 @@ def main():
     components["openarchieven"] = {"version": "remote-1", "endpoint": "https://mcp.openarchieven.nl/",
                                   "note": "Externe dienst; toolcontract wordt per release gecontroleerd, serverversie niet beheerbaar."}
     components["onderzoeksskill"] = {"version": args.version}
+    components.update(local_components(ROOT))
     manifest = {"schema": 1, "version": args.version, "status": "candidate", "upgrade_from": [],
                 "minimum": {"docker": "24.0.0", "compose": "2.20.0"},
                 "migration": {"recovery": "full-snapshot", "description": "Eerste installatie; upstream migraties bij start."},

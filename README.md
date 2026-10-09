@@ -72,6 +72,7 @@ Onderzoek vereist toolgebruik. Dossiers staan in `data/research/public/dossiers`
 ```sh
 python3 -m unittest discover -s tests -v
 php -d zend.assertions=1 -d assert.exception=1 tests/family-start.php
+python3 tools/lock-local.py
 python3 tools/prepare-build.py releases/candidate.json
 cd dist/build && npm ci --omit=dev
 ```

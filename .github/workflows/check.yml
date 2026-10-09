@@ -13,7 +13,7 @@ jobs:
       - run: python3 -m unittest discover -s tests -v
       - run: python3 -m compileall -q openvoorouders agent containers tools
       - run: bash -n install.sh bin/openvoorouders
-      - run: find module containers/webtrees -type f \( -name '*.php' -o -name '*.phtml' \) -exec php -l {} \;
+      - run: python3 tools/check-php.py
       - run: php -d zend.assertions=1 -d assert.exception=1 tests/family-start.php
       - run: python3 tools/prepare-build.py releases/candidate.json
       - run: npm ci --omit=dev

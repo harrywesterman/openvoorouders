@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from openvoorouders.manifest import load
+from openvoorouders.integrity import local_components
 
 
 def extract(component, target):
@@ -52,6 +53,9 @@ def extract(component, target):
 
 def main():
     manifest = load(sys.argv[1] if len(sys.argv) > 1 else ROOT / "releases/candidate.json", deploy=False)
+    for name, component in local_components(ROOT).items():
+        if manifest['components'].get(name) != component:
+            raise RuntimeError('Lokale broncode wijkt af van de release-lock: ' + name + '. Draai tools/lock-local.py en beoordeel het manifest.')
     dest = ROOT / "dist/build"
     if dest.exists():
         shutil.rmtree(dest)
