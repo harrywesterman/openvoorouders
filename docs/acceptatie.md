@@ -28,6 +28,12 @@ De upgradefixture gebruikt synthetische versies 0.0.0 → 0.1.0 met dezelfde ima
 
 De proefomgeving bevat uitsluitend synthetische onderzoeksgegevens. Er zijn geen betaalde AI-aanroepen uitgevoerd. `TMPDIR=/var/tmp` voorkomt dat de vrije-ruimtecontrole de RAM-schijf op `/tmp` meet.
 
+## Proef met eigen modelserver
+
+Op 9 oktober 2026 is een eigen OpenAI-compatibel endpoint gekoppeld met `mlx-community/Qwen3.8-27B-4bit`. Eerst is een gestructureerde functieaanroep gecontroleerd. Daarna is via de browser een volledige leesopdracht gestart: OpenCode riep `webtrees_get-trees` aan, ontving de echte stamboomlijst en het model gaf de correcte actieve stamboom terug in het Nederlands. De opdracht eindigde als `complete`; de toolaanroep als `completed`. Er waren geen externe archiefzoekacties of schrijfaanroepen in deze proef. Privéonderzoek was uitgeschakeld.
+
+Dit bewijst deze provider-/modelcombinatie en een MCP-read; het is geen bewijs voor de kwaliteit van genealogisch onderzoek, andere providers, beeldherkenning of alle MCP-writes. Het endpoint en de toegangssleutel zijn lokale instellingen en worden niet in de repository opgenomen.
+
 ## Nog vereist vóór stabiele vrijgave
 
 - Functionele ARM64-containerproef uitvoeren. Controleer Python-, PHP-, Composer-, uv- en native bibliotheekversies in de buildattestatie. Bouwafhankelijkheden worden niet allemaal hermetisch uit een eigen pakketarchief gehaald; de uiteindelijke runtime-images zijn wel met digest vastgezet.

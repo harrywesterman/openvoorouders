@@ -2,6 +2,7 @@
 use Fisharebest\Webtrees\Http\RequestHandlers\TreeManagement;
 use Fisharebest\Webtrees\Http\RequestHandlers\PendingChanges;
 use Openvoorouders\FamilyStart;
+use Fisharebest\Webtrees\View;
 $states = ['starting'=>'Starten','running'=>'Bezig','stopping'=>'Wordt gestopt','stopped'=>'Gestopt','complete'=>'Afgerond','failed'=>'Mislukt','interrupted'=>'Onderbroken'];
 $form = static function (string $action) use ($module, $tab): void { ?>
 <form method="post" action="<?= e($module->url()) ?>" class="mb-4"><?= csrf_field() ?>
@@ -58,11 +59,54 @@ $form = static function (string $action) use ($module, $tab): void { ?>
 <p>Stel een vrije vraag of noem een persoon met het webtrees-ID. De agent leest eerdere dossiers, vermeldt bronnen en zet wijzigingen klaar voor jouw beoordeling in webtrees. Er loopt één onderzoek tegelijk.</p>
 <?php $form('research') ?>
 <label>Nieuw of vervolgonderzoek<select name="continue"><option value="">Nieuw onderzoek</option><?php foreach ($jobs as $job): if (!in_array($job['state'], ['starting','running','stopping'], true)): ?><option value="<?= e($job['id']) ?>"><?= e($job['prompt']) ?><?= $job['private'] ? ' · privé (vink hieronder privégegevens aan)' : '' ?></option><?php endif; endforeach ?></select></label>
-<label>Provider<select name="provider" required><?php foreach ($providers['all'] ?? [] as $p): ?><option value="<?= e($p['id']) ?>"><?= e($p['name']) ?><?= in_array($p['id'], $providers['connected'] ?? []) ? ' · verbonden' : '' ?></option><?php endforeach ?></select></label>
-<label>Model-ID<input name="model" required placeholder="Kopieer een model-ID uit het overzicht hieronder"></label>
-<details><summary>Beschikbare modellen en mogelijkheden</summary>
-<?php foreach ($providers['all'] ?? [] as $p): ?><details><summary><?= e($p['name']) ?></summary><ul><?php foreach ($p['models'] ?? [] as $id=>$m): ?><li><code><?= e($id) ?></code> · toolgebruik <?= ($m['capabilities']['toolcall'] ?? $m['tool_call'] ?? false) ? 'ja' : 'nee' ?> · beeld <?= ($m['capabilities']['input']['image'] ?? false) ? 'ja' : 'nee' ?></li><?php endforeach ?></ul></details><?php endforeach ?>
-</details>
+<?php if (!count($providers['connected'] ?? [])): ?>
+<p class="notice">Stel eerst je AI in. Je kunt een provider aanmelden of je eigen modelserver koppelen. <a href="<?= e($module->url(['tab'=>'instellingen'])) ?>">Naar AI instellen</a>.</p>
+<?php endif ?>
+<label>Provider<select name="provider" id="ovo-provider" required aria-describedby="ovo-provider-help">
+<option value="">Kies zelf een provider</option>
+<?php foreach ($providers['all'] ?? [] as $p): ?><option value="<?= e($p['id']) ?>" data-connected="<?= in_array($p['id'], $providers['connected'] ?? [], true) ? '1' : '0' ?>"><?= e($p['name']) ?><?= in_array($p['id'], $providers['connected'] ?? [], true) ? ' · verbonden' : ' · aanmelden nodig' ?></option><?php endforeach ?>
+</select></label>
+<p id="ovo-provider-help" role="status">Kies een provider. Er wordt niets automatisch geselecteerd.</p>
+<label>Model<select name="model" id="ovo-model" required aria-describedby="ovo-model-help">
+<option value="">Kies een model van je provider</option>
+<?php foreach ($providers['all'] ?? [] as $p): ?><optgroup label="<?= e($p['name']) ?>" data-provider="<?= e($p['id']) ?>">
+<?php foreach ($p['models'] ?? [] as $id=>$m): $tools = $m['capabilities']['toolcall'] ?? $m['tool_call'] ?? false; $image = $m['capabilities']['input']['image'] ?? in_array('image', $m['modalities']['input'] ?? [], true); ?>
+<option value="<?= e($id) ?>" data-tools="<?= $tools ? '1' : '0' ?>" data-image="<?= $image ? '1' : '0' ?>"><?= e($m['name'] ?? $id) ?> · <?= e($id) ?><?= $tools ? '' : ' · geen bevestigd toolgebruik' ?><?= $image ? ' · kan afbeeldingen lezen' : '' ?></option>
+<?php endforeach ?></optgroup><?php endforeach ?>
+</select></label>
+<p id="ovo-model-help" role="status">Onderzoek vereist toolgebruik. Voor scans is ook beeldherkenning nodig.</p>
+<noscript><p>Zonder JavaScript staan de modellen per provider gegroepeerd. Kies een model binnen dezelfde provider; de server controleert deze combinatie.</p></noscript>
+<?php View::push('javascript') ?>
+<script>
+(() => {
+    const provider = document.getElementById('ovo-provider');
+    const model = document.getElementById('ovo-model');
+    const groups = Array.from(model.querySelectorAll('optgroup'));
+    const providerHelp = document.getElementById('ovo-provider-help');
+    const modelHelp = document.getElementById('ovo-model-help');
+    const resetModels = () => {
+        model.replaceChildren(new Option('Kies een model van je provider', ''));
+        const group = groups.find(group => group.dataset.provider === provider.value);
+        if (group) model.append(group.cloneNode(true));
+        model.disabled = !group;
+        providerHelp.textContent = !provider.value ? 'Kies een provider. Er wordt niets automatisch geselecteerd.'
+            : provider.selectedOptions[0].dataset.connected === '1' ? 'Deze provider is verbonden.'
+            : 'Deze provider is nog niet verbonden. Meld je eerst aan via AI instellen.';
+        modelHelp.textContent = group ? 'Kies zelf een model. Onderzoek vereist toolgebruik; voor scans is ook beeldherkenning nodig.'
+            : provider.value ? 'Deze provider biedt nog geen modellen aan. Controleer AI instellen.' : 'Kies eerst een provider.';
+    };
+    provider.addEventListener('change', resetModels);
+    model.addEventListener('change', () => {
+        const option = model.selectedOptions[0];
+        modelHelp.textContent = !model.value ? 'Kies zelf een model.' : option.dataset.tools !== '1'
+            ? 'Dit model heeft geen bevestigd toolgebruik. Het kan daarom geen archiefonderzoek starten.'
+            : option.dataset.image === '1' ? 'Toolgebruik en het lezen van afbeeldingen worden ondersteund.'
+            : 'Toolgebruik wordt ondersteund. Dit model kan geen afbeeldingen rechtstreeks lezen.';
+    });
+    resetModels();
+})();
+</script>
+<?php View::endpush() ?>
 <label>Onderzoeksvraag<textarea name="prompt" rows="5" maxlength="20000" required></textarea></label>
 <label><input type="checkbox" name="private" value="1"> Privégegevens gebruiken (vereist toestemming voor deze provider)</label>
 <button>Onderzoek starten</button></form>
@@ -83,7 +127,7 @@ $form = static function (string $action) use ($module, $tab): void { ?>
 <?php elseif ($tab === 'instellingen'): ?>
 <h2>Jouw AI, jouw keuze</h2>
 <p>Kies een provider uit de meegeleverde OpenCode-versie. Onderzoek vereist toolgebruik; beeldherkenning is nodig als je scans rechtstreeks wilt laten lezen. Er wordt nooit automatisch een andere provider gekozen.</p>
-<p>Eigen endpoints en lokale modelservers configureer je voorlopig in <code>data/agent-config/opencode.json</code> via de host. Die configuratie en aanmeldingen blijven bij updates behouden.</p>
+<p>Koppel hieronder je eigen endpoint of lokale modelserver. Geavanceerde OpenCode-instellingen kun je via de host aanpassen in <code>data/agent-config/opencode.json</code>. Je instellingen en aanmeldingen blijven bij updates behouden.</p>
 <p>Voor een aanmeldmethode die een lokale browsercallback vereist, gebruik je voorlopig de native aanmelding op de Linux-machine: <code>sudo openvoorouders ai-aanmelden</code>.</p>
 <details><summary>Eigen endpoint of lokale modelserver toevoegen (OpenAI-compatibel)</summary>
 <?php $form('custom-provider') ?>
