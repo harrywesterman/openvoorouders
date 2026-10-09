@@ -16,7 +16,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     env:
-      DOCKER_CONFIG: ${{ runner.temp }}/ovo-docker-config
+      DOCKER_CONFIG: /tmp/ovo-docker-config
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - run: python3 -m unittest discover -s tests
