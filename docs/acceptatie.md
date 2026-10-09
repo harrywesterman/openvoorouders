@@ -34,6 +34,14 @@ Op 9 oktober 2026 is een eigen OpenAI-compatibel endpoint gekoppeld met `mlx-com
 
 Dit bewijst deze provider-/modelcombinatie en een MCP-read; het is geen bewijs voor de kwaliteit van genealogisch onderzoek, andere providers, beeldherkenning of alle MCP-writes. Het endpoint en de toegangssleutel zijn lokale instellingen en worden niet in de repository opgenomen.
 
+## Live onderzoekslog en ingestelde AI-keuzes
+
+De VM gebruikt sinds 9 oktober 2026 een automatisch bijgewerkt onderzoekslog. Het toont zichtbare vragen, antwoorden en toolopdrachten met hun uitvoer, zonder redeneerblokken of toegangssleutels. Automatisch volgen kan worden uitgezet om terug te lezen. De browserproef met dezelfde JavaScript-code ontving opeenvolgende antwoordfragmenten zonder de conceptvraag opnieuw te laden; terugscrollen en de volgschakelaar zijn gecontroleerd.
+
+Op de echte VM is gecontroleerd dat de owner voortgang kan lezen, een ongeldig onderzoek-ID wordt geweigerd en anonieme aanvragen geen voortgang krijgen (HTTP 403). De antwoorden worden niet gecachet. Het gestopte gesprek bleef behouden na de containerupdate. Bij Onderzoek verschijnt alleen de zelf ingestelde provider met het geconfigureerde model; de volledige catalogus blijft beschikbaar bij AI instellen. Alle 55 Python-tests, de PHP-voortgangscontroles en CI zijn geslaagd.
+
+De eerste inhoudelijke kwartierstaatproef liet ook resterende agentproblemen zien: de onderzoeksskill was als instructiebestand beschikbaar maar niet geregistreerd voor de skill-tool, en de native read-tool weigerde dossierpaden ondanks de bedoelde profielregels. Het model probeerde bovendien herhaaldelijk de beginpersoon te identificeren en raakte in contextsamenvattingen. Deze proef is op verzoek van de gebruiker gestopt; dit is geen geslaagde inhoudelijke kwartierstaatacceptatie. Herstel en test skillregistratie, padrechten en expliciete beginpersooncontext vóór stabiele vrijgave.
+
 ## Nog vereist vóór stabiele vrijgave
 
 - Functionele ARM64-containerproef uitvoeren. Controleer Python-, PHP-, Composer-, uv- en native bibliotheekversies in de buildattestatie. Bouwafhankelijkheden worden niet allemaal hermetisch uit een eigen pakketarchief gehaald; de uiteindelijke runtime-images zijn wel met digest vastgezet.
