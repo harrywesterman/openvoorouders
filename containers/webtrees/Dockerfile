@@ -38,5 +38,6 @@ RUN cd /opt/managed-modules/api-mcp \
  && groupadd -g 10001 ovo && usermod -a -G ovo www-data \
  && mkdir -p /opt/ovo-data /opt/ovo-control
 COPY containers/webtrees/maintenance.conf /etc/apache2/conf-enabled/ovo-maintenance.conf
-HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=24 CMD /docker-healthcheck.sh
+RUN python3 /opt/openvoorouders/patch-entrypoint.py && apache2ctl -t
+HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=24 CMD test -f /var/www/webtrees/data/config.ini.php && /docker-healthcheck.sh
 ENTRYPOINT ["python3", "/opt/openvoorouders/start.py"]

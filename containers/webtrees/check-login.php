@@ -25,7 +25,7 @@ if (!$id) {
 }
 $jar = tempnam(sys_get_temp_dir(), 'ovo-login-');
 $curl = curl_init();
-curl_setopt_array($curl, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_COOKIEJAR=>$jar, CURLOPT_COOKIEFILE=>$jar, CURLOPT_TIMEOUT=>30]);
+curl_setopt_array($curl, [CURLOPT_RETURNTRANSFER=>true, CURLOPT_COOKIEJAR=>$jar, CURLOPT_COOKIEFILE=>$jar, CURLOPT_TIMEOUT=>30, CURLOPT_USERAGENT=>'Openvoorouders healthcheck']);
 try {
     curl_setopt($curl, CURLOPT_URL, 'http://127.0.0.1/login');
     $page = curl_exec($curl);

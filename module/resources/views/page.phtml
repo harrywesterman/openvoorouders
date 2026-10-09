@@ -23,10 +23,16 @@ $form = static function (string $action) use ($module, $tab): void { ?>
 <?php if ($message): ?><p role="status"><?= e($message) ?></p><?php endif ?>
 <?php if (!$tree): ?>
 <h2>Welke stamboom gaan we onderzoeken?</h2>
-<p>Maak of importeer eerst één stamboom via het webtrees-beheerpaneel. Kies hem daarna hieronder. Deze installatie is voor één onderzoeker.</p>
+<p>Begin met een nieuwe stamboom en vertel wat je al weet. Deze installatie is voor één onderzoeker.</p>
+<?php $form('create-tree') ?>
+<label>Naam van je stamboom<input name="title" value="Mijn stamboom" maxlength="100" required></label>
+<button>Nieuwe stamboom en familiestart</button></form>
+<?php if (count($trees)): ?>
+<p>Of kies een bestaande stamboom. Een GEDCOM kun je eerst via het webtrees-beheerpaneel importeren.</p>
 <?php $form('configure') ?>
 <label>Actieve stamboom<select name="tree" required><?php foreach ($trees as $t): ?><option value="<?= e((string)$t->id()) ?>"><?= e($t->title()) ?></option><?php endforeach ?></select></label>
 <button>Deze stamboom gebruiken</button></form>
+<?php endif ?>
 <?php elseif ($tab === 'familiestart'): ?>
 <h2>Wat weet je al over je familie?</h2>
 <p>Begin bij jezelf of een ander familielid. Vul zoveel mogelijk namen, plaatsen en datums in. Onbekend mag leeg blijven. Schattingen: <code>ABT 1900</code>; een volledige datum: <code>12 JAN 1900</code>. Je kunt dit bewaren en later verdergaan. Dit werkt zonder AI.</p>

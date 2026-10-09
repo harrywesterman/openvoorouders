@@ -26,7 +26,8 @@ class Docker:
             self.command("image", "inspect", image, capture=True)
 
     def stop(self):
-        self.compose("stop", "-t", "120")
+        self.compose("stop", "-t", "120", "webtrees", "agent")
+        self.compose("stop", "-t", "120", "database")
 
     def start(self):
         self.compose("up", "-d", "--wait", "--wait-timeout", "240", "--remove-orphans")

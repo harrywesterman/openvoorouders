@@ -57,6 +57,16 @@ def main():
         life=Lifecycle(root,runtime);life.maintenance(False)
         runtime.pull(manifest);runtime.start();runtime.verify()
         report['container_start_database_login']=True
+        life.maintenance(True)
+        try:
+            urllib.request.urlopen(config['url']+'/login',timeout=15)
+            raise RuntimeError('Onderhoud blokkeert de website niet.')
+        except urllib.error.HTTPError as error:
+            if error.code!=503:raise
+            error.close()
+        runtime.verify()  # Internal login probes must still work during maintenance.
+        life.maintenance(False)
+        report['maintenance_blocks_browser_allows_internal_login']=True
         base=config['url'];module='/module/_openvoorouders_/AdminResearch'
         cookies=http.cookiejar.CookieJar();browser=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookies))
         def get(path):
@@ -74,11 +84,7 @@ def main():
                 if error.code!=expected:raise
                 text=error.read().decode();error.close();return text
         post('/login',{'username':values['bootstrap_username'],'password':values['bootstrap_password'],'url':base+'/admin/trees/create'})
-        post('/admin/trees/create',{'name':'ci-tree','title':'CI stamboom'})
-        page=get(module)
-        tree=re.search(r'<option value="(\d+)">CI stamboom',page)
-        if not tree: raise RuntimeError('Openvoorouders kan de nieuwe stamboom niet kiezen.')
-        post(module,{'do':'configure','tree':tree[1]})
+        post(module,{'do':'create-tree','title':'CI stamboom'})
         family=module+'?tab=familiestart'
         post(family,{'do':'draft','tab':'familiestart','review':'1','people[self][given]':'CI persoon','people[self][surname]':'Voorouder',
                      'people[self][birth]':'ABT 1900','people[self][source]':'CI familiebron','people[father][given]':'CI vader','people[father][birth]':'1870'})

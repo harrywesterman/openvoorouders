@@ -83,6 +83,23 @@ class LifecycleTests(unittest.TestCase):
         self.assertTrue(Path(self.life.read('update.json')['backup']).exists())
         self.assertEqual((self.root/'compose.yaml').read_text(),'new-compose')
 
+    def test_opencode_cache_is_not_restored_but_settings_and_lock_are(self):
+        import tarfile
+        cache=self.root/'data/agent-config/node_modules/.bin'
+        cache.mkdir(parents=True)
+        (cache/'tool').symlink_to('../package/tool.js')
+        (self.root/'data/agent-config/package-lock.json').write_text('pinned plugin dependencies')
+        self.life.update(self.new)
+        backup=Path(self.life.read('update.json')['backup'])
+        with tarfile.open(backup/'state.tar') as archive:
+            names=archive.getnames()
+        self.assertFalse(any(n.startswith('data/agent-config/node_modules') for n in names))
+        self.assertIn('data/agent-config/package-lock.json',names)
+        self.life.restore()
+        self.assertEqual((self.root/'data/agent-config/package-lock.json').read_text(),'pinned plugin dependencies')
+        self.assertEqual((self.root/'data/agent-config/settings').read_text(),'custom endpoint')
+        self.assertFalse((self.root/'data/agent-config/node_modules').exists())
+
     def test_full_restore_includes_schema_secrets_host_and_modules(self):
         self.runtime.migrate = lambda: (self.root/'data/database/schema').write_text('schema-after')
         self.runtime.fail = 'verify'

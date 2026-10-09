@@ -26,7 +26,7 @@ Download en pak het bronpakket van de gekozen **stabiele Openvoorouders-release*
 sudo bash install.sh
 ```
 
-De installer vraagt je lokale IP-adres, poort (standaard 8080), browseradres en webtrees-accountgegevens. Databases, interne wachtwoorden en agentsleutels worden automatisch ingesteld. Daarna open je bijvoorbeeld `http://linuxserver:8080`, meld je je aan, maak/importeer je een stamboom en kies je hem bij **Onderzoek**.
+De installer vraagt je lokale IP-adres, poort (standaard 8080), browseradres en webtrees-accountgegevens. Databases, interne wachtwoorden en agentsleutels worden automatisch ingesteld. Daarna open je bijvoorbeeld `http://linuxserver:8080`, meld je je aan en kies je bij **Onderzoek** voor **Nieuwe stamboom en familiestart**. Heb je al een GEDCOM? Importeer die via webtrees en kies daarna de bestaande stamboom.
 
 HTTP is bedoeld voor je eigen vertrouwde netwerk. Publiceer deze poort niet rechtstreeks op internet. DNS, publieke toegang, HTTPS/tunnels, desktopinstallatie en FamilySearch komen later.
 

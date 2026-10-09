@@ -57,6 +57,10 @@ class Lifecycle:
             # Managed symlinks are regenerated from the new image; never archive program code.
             if len(parts) >= 3 and parts[:2] == ("data", "modules") and parts[2] in managed:
                 return None
+            # OpenCode installs its pinned plugin here. This is regenerated code,
+            # not settings; retain package.json/lock, auth and user configuration.
+            if parts[:3] == ("data", "agent-config", "node_modules"):
+                return None
             if info.issym() or info.islnk() or not (info.isfile() or info.isdir()):
                 raise RuntimeError("Back-up bevat een niet-ondersteunde link of speciaal bestand: " + info.name)
             return info

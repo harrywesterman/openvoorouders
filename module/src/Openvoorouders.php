@@ -11,7 +11,6 @@ use Fisharebest\Webtrees\Registry;
 use Fisharebest\Webtrees\Contracts\UserInterface;
 use Fisharebest\Webtrees\Http\ViewResponseTrait;
 use Fisharebest\Webtrees\Http\Exceptions\HttpAccessDeniedException;
-use Fisharebest\Webtrees\Http\RequestHandlers\ModuleAction;
 use Fisharebest\Webtrees\Module\AbstractModule;
 use Fisharebest\Webtrees\Module\ModuleCustomInterface;
 use Fisharebest\Webtrees\Module\ModuleCustomTrait;
@@ -19,6 +18,7 @@ use Fisharebest\Webtrees\Module\ModuleMenuInterface;
 use Fisharebest\Webtrees\Module\ModuleMenuTrait;
 use Fisharebest\Webtrees\Services\TreeService;
 use Fisharebest\Webtrees\Services\UserService;
+use Fisharebest\Webtrees\Services\GedcomImportService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Jefferson49\Webtrees\Module\WebtreesApi\WebtreesApi;
@@ -45,7 +45,7 @@ final class Openvoorouders extends AbstractModule implements ModuleCustomInterfa
     public function resourcesFolder(): string { return __DIR__ . '/../resources/'; }
     public function boot(): void { View::registerNamespace('openvoorouders', $this->resourcesFolder() . 'views/'); }
     public function url(array $params = []): string {
-        return route(ModuleAction::class, ['module'=>$this->name(), 'action'=>'AdminResearch'] + $params);
+        return route('module-no-tree', ['module'=>$this->name(), 'action'=>'AdminResearch'] + $params);
     }
     public function getMenu(Tree $tree): ?Menu {
         return Auth::isAdmin() ? new Menu('Onderzoek', $this->url()) : null;
@@ -148,6 +148,20 @@ final class Openvoorouders extends AbstractModule implements ModuleCustomInterfa
             $maintenance = json_decode(@file_get_contents('/opt/ovo-control/maintenance.json') ?: '{"enabled":true}', true);
             if ($maintenance['enabled'] ?? true) throw new \RuntimeException('Openvoorouders wordt bijgewerkt.');
             switch ($body['do'] ?? '') {
+                case 'create-tree':
+                    if ($tree !== null) throw new \RuntimeException('De actieve boom is al ingesteld.');
+                    $title = trim((string) ($body['title'] ?? 'Mijn stamboom'));
+                    if ($title === '' || mb_strlen($title) > 100) throw new \InvalidArgumentException('Geef een stamboomnaam van maximaal 100 tekens.');
+                    DB::connection()->transaction(function () use ($title, $user): void {
+                        $new = Registry::container()->get(TreeService::class)->create('openvoorouders-' . bin2hex(random_bytes(6)), $title);
+                        // Native creation inserts a sample person. Remove only this newly created
+                        // sample, in the same transaction, through webtrees' own index maintenance.
+                        $sample = Registry::individualFactory()->make('X1', $new);
+                        if (!$sample) throw new \RuntimeException('De nieuwe stamboom kon niet worden voorbereid.');
+                        Registry::container()->get(GedcomImportService::class)->updateRecord($sample->gedcom(), $new, true);
+                        $this->selectTree($new, $user);
+                    });
+                    return redirect($this->url(['tab'=>'familiestart']));
                 case 'custom-provider':
                     $this->agent('POST', '/providers/custom', ['provider'=>(string)$body['provider'], 'name'=>(string)$body['name'],
                         'url'=>(string)$body['url'], 'model'=>(string)$body['model'], 'key'=>(string)($body['key'] ?? ''),
@@ -160,10 +174,7 @@ final class Openvoorouders extends AbstractModule implements ModuleCustomInterfa
                     if ($tree !== null) throw new \RuntimeException('De actieve boom is al ingesteld.');
                     foreach (Registry::container()->get(TreeService::class)->all() as $candidate) {
                         if ((string) $candidate->id() === (string) ($body['tree'] ?? '')) {
-                            $this->setPreference('owner', (string) $user->id());
-                            $this->setPreference('tree', (string) $candidate->id());
-                            $user->setPreference(UserInterface::PREF_THEME, '_jc-theme-justlight_');
-                            $user->setPreference(UserInterface::PREF_LANGUAGE, 'nl');
+                            $this->selectTree($candidate, $user);
                             break;
                         }
                     }
@@ -222,6 +233,13 @@ final class Openvoorouders extends AbstractModule implements ModuleCustomInterfa
             $message = $e instanceof \RuntimeException || $e instanceof \InvalidArgumentException ? $e->getMessage() : 'De actie is mislukt. Controleer de koppeling of je invoer.';
             return response('<p>' . e($message) . '</p><a href="' . e($this->url(['tab'=>$tab])) . '">Terug naar Openvoorouders</a>', 400);
         }
+    }
+
+    private function selectTree(Tree $tree, UserInterface $user): void {
+        $this->setPreference('owner', (string) $user->id());
+        $this->setPreference('tree', (string) $tree->id());
+        $user->setPreference(UserInterface::PREF_THEME, '_jc-theme-justlight_');
+        $user->setPreference(UserInterface::PREF_LANGUAGE, 'nl');
     }
 
     private function saveDraft(array $draft): void {
