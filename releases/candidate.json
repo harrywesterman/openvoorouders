@@ -41,6 +41,14 @@
       "folder": null,
       "archive": "tar"
     },
+    "research-template": {
+      "version": "e94d114523cba4c4a227390e20647bb36c8a2601",
+      "repository": "harrywesterman/stamboom-template",
+      "url": "https://api.github.com/repos/harrywesterman/stamboom-template/tarball/e94d114523cba4c4a227390e20647bb36c8a2601",
+      "sha256": "675a054dd3a56d35bd368c2942d0ecfe6225e8a51ad7b1fd81a1e933427063cb",
+      "folder": null,
+      "archive": "tar"
+    },
     "justlight": {
       "version": "2.4.0",
       "repository": "JustCarmen/webtrees-theme-justlight",
@@ -105,6 +113,28 @@
       "version": "22.23.3",
       "image": "docker.io/library/node@sha256:154ba2f4d6fec323d28e4f4bb86bba4677f1223391a1979cf521304e03a98dfa"
     },
+    "python": {
+      "version": "3.13",
+      "note": "Python uit het vastgezette Debian trixie Node-image."
+    },
+    "uv": {
+      "version": "0.9.5",
+      "wheel_sha256": [
+        "48a3542835d37882ff57d1ff91b757085525d98756712fa61cf9941d3dda8ebf",
+        "6507bbbcd788553ec4ad5a96fa19364dc0f58b023e31d79868773559a83ec181",
+        "6a046c2e833169bf26f461286aab58a2ba8d48ed2220bfcf119dcfaf87163116"
+      ]
+    },
+    "composer": {
+      "version": "2.8.12",
+      "image": "docker.io/library/composer@sha256:5248900ab8b5f7f880c2d62180e40960cd87f60149ec9a1abfd62ac72a02577c"
+    },
+    "imagick": {
+      "version": "3.8.1",
+      "url": "https://pecl.php.net/get/imagick-3.8.1.tgz",
+      "sha256": "3a3587c0a524c17d0dad9673a160b90cd776e836838474e173b549ed864352ee",
+      "archive": "tar"
+    },
     "opencode": {
       "version": "1.18.35",
       "npm_integrity": "sha512-tDQKThIZ3amp8NSn3XDP2Dj5BlhRbZC0VkIxgYuf6gvRSXkseqD31j/U4KfpPwha593i8M59hdsDfz32yJx4Og=="
@@ -117,36 +147,6 @@
     "onderzoeksskill": {
       "version": "73f7fd9e4b89ebaab9b56eb391288e37565dd69f3925f89875a62cd24dba4204",
       "source_sha256": "73f7fd9e4b89ebaab9b56eb391288e37565dd69f3925f89875a62cd24dba4204"
-    },
-    "uv": {
-      "version": "0.9.5",
-      "wheel_sha256": [
-        "48a3542835d37882ff57d1ff91b757085525d98756712fa61cf9941d3dda8ebf",
-        "6507bbbcd788553ec4ad5a96fa19364dc0f58b023e31d79868773559a83ec181",
-        "6a046c2e833169bf26f461286aab58a2ba8d48ed2220bfcf119dcfaf87163116"
-      ]
-    },
-    "python": {
-      "version": "3.13",
-      "note": "Debian trixie Python uit vastgezet Node-image; exacte pakketversie wordt in build-attestatie vastgelegd."
-    },
-    "research-template": {
-      "version": "e94d114523cba4c4a227390e20647bb36c8a2601",
-      "repository": "harrywesterman/stamboom-template",
-      "url": "https://api.github.com/repos/harrywesterman/stamboom-template/tarball/e94d114523cba4c4a227390e20647bb36c8a2601",
-      "sha256": "675a054dd3a56d35bd368c2942d0ecfe6225e8a51ad7b1fd81a1e933427063cb",
-      "folder": null,
-      "archive": "tar"
-    },
-    "composer": {
-      "version": "2.8.12",
-      "image": "docker.io/library/composer@sha256:5248900ab8b5f7f880c2d62180e40960cd87f60149ec9a1abfd62ac72a02577c"
-    },
-    "imagick": {
-      "version": "3.8.1",
-      "url": "https://pecl.php.net/get/imagick-3.8.1.tgz",
-      "sha256": "3a3587c0a524c17d0dad9673a160b90cd776e836838474e173b549ed864352ee",
-      "archive": "tar"
     },
     "agent-adapter": {
       "version": "f73120738d24a7f7be56f6ba92e5294b38ea74f71f880b662a27fc6d05e85f0d",
