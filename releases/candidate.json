@@ -18,10 +18,10 @@
   },
   "components": {
     "webtrees-api": {
-      "version": "119809db784a0d0a8604c8457e06f12e59793f09",
+      "version": "754f9855cbe7f85fffa0e56f3d32b9f271fc3297",
       "repository": "harrywesterman/webtrees-API",
-      "url": "https://api.github.com/repos/harrywesterman/webtrees-API/tarball/119809db784a0d0a8604c8457e06f12e59793f09",
-      "sha256": "875b3be450583fdb83a650c06e9f619ebd3f08b57a3312022513b60e8c7da079",
+      "url": "https://api.github.com/repos/harrywesterman/webtrees-API/tarball/754f9855cbe7f85fffa0e56f3d32b9f271fc3297",
+      "sha256": "96fa1aa47fafe54629472dc465d1858191a49da89d84e77e38c3630402d50c5d",
       "folder": "api-mcp",
       "archive": "tar"
     },
